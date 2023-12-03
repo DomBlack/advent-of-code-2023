@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,6 +69,10 @@ func (d *Day[Input, Cache]) WithWrongPart1Answer(answer, hint string) *Day[Input
 func (d *Day[Input, Cache]) WithPart2WrongAnswer(answer, hint string) *Day[Input, Cache] {
 	d.wrongPart2Answers = append(d.wrongPart2Answers, wrongAnswer{answer, hint})
 	return d
+}
+
+func (d *Day[Input, Cache]) DisableLogging() {
+	d.log = d.log.Level(zerolog.Disabled)
 }
 
 // Run executes the given parts with the given input
@@ -136,6 +141,7 @@ func (d *Day[Input, Cache]) Test(t *testing.T, part1TestInput, part1ExpectedAnsw
 // TestPart1 runs the given part 1 with the given input and asserts the answer
 func (d *Day[Input, Cache]) TestPart1(t *testing.T, input, expectedAnswer string) {
 	t.Helper()
+
 	d.testPart(t, fmt.Sprintf("part1_%s", input), 1, d.part1, input, expectedAnswer)
 }
 
@@ -151,7 +157,7 @@ func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int,
 	t.Run(testName, func(t *testing.T) {
 		t.Parallel()
 
-		if fn == nil && expectedAnswer != "" {
+		if fn == nil && expectedAnswer == "" {
 			t.Skip("Part not implemented")
 		}
 
@@ -163,9 +169,9 @@ func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int,
 		}
 
 		// drop to trace level for tests
-		testLogger := d.log.Level(zerolog.TraceLevel).With().Int("part", partNum).Logger()
+		testLogger := d.log.Level(zerolog.TraceLevel).With().Int("_part", partNum).Logger()
 
-		preppedData, err := d.inputPreprocessor([]byte(input))
+		preppedData, err := d.inputPreprocessor([]byte(strings.TrimSpace(input)))
 		assert.NoError(t, err, "Failed to preprocess input")
 
 		answer, err := fn(testLogger, d.cacheToInput(preppedData))

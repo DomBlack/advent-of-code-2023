@@ -11,11 +11,12 @@ import (
 	// Register all the days
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day01"
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day02"
+	_ "github.com/DomBlack/advent-of-code-2023/internal/day03"
 )
 
 func main() {
 	var onlyDay int
-	pflag.IntVar(&onlyDay, "day", 0, "Only run this day")
+	pflag.IntVarP(&onlyDay, "day", "d", 0, "Only run this day")
 
 	pflag.Parse()
 

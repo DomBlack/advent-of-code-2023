@@ -12,6 +12,24 @@ type numeric interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~float32 | ~float64
 }
 
+// ForEach applies the given function to each value in the stream.
+func ForEach[V any](input Stream[V], fn func(V) error) error {
+	for {
+		v, err := input.Next()
+
+		if errors.Is(err, io.EOF) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		err = fn(v)
+		if err != nil {
+			return err
+		}
+	}
+}
+
 // Collect returns all values from the stream as a slice.
 func Collect[V any](input Stream[V]) ([]V, error) {
 	var values []V
