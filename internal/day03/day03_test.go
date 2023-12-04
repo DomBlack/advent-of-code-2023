@@ -4,10 +4,6 @@ import (
 	"testing"
 )
 
-func Test_Temp(t *testing.T) {
-	Day03.Run()
-}
-
 func Test_Day3(t *testing.T) {
 	input := `467..114..
 ...*......
