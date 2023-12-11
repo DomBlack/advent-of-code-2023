@@ -12,7 +12,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var Day04 = runner.NewDay(4, parseCards, part1, part2)
+var Day04 = runner.NewStreamingDay(4, parseCards, part1, part2).
+	WithExpectedAnswers("25571", "8805731")
 
 type Card struct {
 	Num            int
@@ -110,9 +111,9 @@ func part1(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err e
 }
 
 func part2(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err error) {
-	resettable := stream.Resettable(input)
+	peakable := stream.Lookahead(input)
 
-	cardPoints := stream.Map(resettable, func(card *Card) (int, error) {
+	cardPoints := stream.Map[*Card, int](peakable, func(card *Card) (int, error) {
 		winningNumbers := 0
 		playedIdx := 0
 
@@ -138,9 +139,12 @@ func part2(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err e
 		log.Debug().Int("card", card.Num).Int("copies", card.Copies).Int("winning_nums", winningNumbers).Msg("Card")
 		if winningNumbers > 0 {
 			// Update the future cards with additional copies
-			resettable.Save()
-			for i := 0; i < winningNumbers; i++ {
-				toCopy, err := resettable.Next()
+			cardsToCopy, err := peakable.PeekN(winningNumbers)
+			if err != nil {
+				return 0, err
+			}
+
+			for _, toCopy := range cardsToCopy {
 				if err != nil {
 					if !errors.Is(err, io.EOF) {
 						return 0, errors.Wrap(err, "unable to read ahead")
@@ -150,7 +154,6 @@ func part2(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err e
 				// For every 1 of this card, the future card gets a new copy too
 				toCopy.Copies += card.Copies
 			}
-			resettable.Restore()
 		}
 
 		return card.Copies, nil

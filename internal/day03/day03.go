@@ -10,8 +10,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var Day03 = runner.NewDay(3, parseSchematic, part1, part2).
-	WithWrongPart1Answer("541660", "too high")
+var Day03 = runner.NewStreamingDay(3, parseSchematic, part1, part2).
+	WithExpectedAnswers("539590", "80703636")
 
 func part1(log zerolog.Logger, input stream.Stream[Token]) (answer string, err error) {
 	parts, numbers := stream.Partition(input, func(token Token) (bool, error) {

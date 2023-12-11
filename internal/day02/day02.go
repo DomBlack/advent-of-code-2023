@@ -10,7 +10,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var Day02 = runner.NewDay(2, parseGames, part1, part2)
+var Day02 = runner.NewStreamingDay(2, parseGames, part1, part2).
+	WithExpectedAnswers("2727", "56580")
 
 type Game struct {
 	ID       int

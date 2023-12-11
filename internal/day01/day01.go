@@ -8,8 +8,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var Day01 = runner.NewDay(1, stream.LinesFrom, implementation(part1Tree), implementation(part2Tree)).
-	WithPart2WrongAnswer("54780", "too high")
+var Day01 = runner.NewStreamingDay(1, stream.LinesFrom, implementation(part1Tree), implementation(part2Tree)).
+	WithExpectedAnswers("54630", "54770")
 
 var part1Tree = trie.New[int]().
 	MustInsert("0", 0).

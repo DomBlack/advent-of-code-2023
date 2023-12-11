@@ -14,6 +14,13 @@ func From[V any](input []V) Stream[V] {
 	}
 }
 
+func FromItem[V any](input V) Stream[V] {
+	return &sliceSource[V]{
+		values:  []V{input},
+		nextIdx: 0,
+	}
+}
+
 type sliceSource[V any] struct {
 	values  []V
 	nextIdx int

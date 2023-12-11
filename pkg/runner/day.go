@@ -16,22 +16,24 @@ import (
 
 // Day represents a day of the advent of code
 type Day[Input, Cache any] struct {
-	log               zerolog.Logger
-	day               int
-	inputPreprocessor func([]byte) (Cache, error)
-	cacheToInput      func(Cache) Input
-	part1             Part[Input]
-	wrongPart1Answers []wrongAnswer
-	part2             Part[Input]
-	wrongPart2Answers []wrongAnswer
+	log                 zerolog.Logger
+	day                 int
+	inputPreprocessor   func([]byte) (Cache, error)
+	cacheToInput        func(Cache) Input
+	part1               Part[Input]
+	wrongPart1Answers   []wrongAnswer
+	expectedPart1Answer string
+	part2               Part[Input]
+	wrongPart2Answers   []wrongAnswer
+	expectedPart2Answer string
 }
 
 // Part represents a function which given the input will return the answer for that part of the day
 type Part[Input any] func(log zerolog.Logger, input Input) (answer string, err error)
 
-// NewDay creates a day which takes a parser to convert the input bytes into a stream of inputs,
+// NewStreamingDay creates a day which takes a parser to convert the input bytes into a stream of inputs,
 // which the part 1 and part 2 functions can then use.
-func NewDay[Input any](day int, parser func([]byte) stream.Stream[Input], part1, part2 Part[stream.Stream[Input]]) *Day[stream.Stream[Input], []Input] {
+func NewStreamingDay[Input any](day int, parser func([]byte) stream.Stream[Input], part1, part2 Part[stream.Stream[Input]]) *Day[stream.Stream[Input], []Input] {
 	d := &Day[stream.Stream[Input], []Input]{
 		log: log.With().Int("_day", day).Logger().Level(zerolog.InfoLevel),
 		inputPreprocessor: func(bytes []byte) ([]Input, error) {
@@ -45,6 +47,26 @@ func NewDay[Input any](day int, parser func([]byte) stream.Stream[Input], part1,
 		part2: part2,
 	}
 
+	days[day] = d
+
+	return d
+}
+
+// NewDay returns a day which is parsed as a whole initially, and then the
+// parsed data is given to each part.
+//
+// See [NewStreamingDay] for a stream processing version
+func NewDay[Input any](day int, parser func([]byte) (Input, error), part1, part2 Part[Input]) *Day[Input, Input] {
+	d := &Day[Input, Input]{
+		log:               log.With().Int("_day", day).Logger().Level(zerolog.InfoLevel),
+		inputPreprocessor: parser,
+		cacheToInput: func(cache Input) Input {
+			return cache
+		},
+		day:   day,
+		part1: part1,
+		part2: part2,
+	}
 	days[day] = d
 
 	return d
@@ -68,6 +90,12 @@ func (d *Day[Input, Cache]) WithWrongPart1Answer(answer, hint string) *Day[Input
 // WithPart2WrongAnswer adds a wrong answer to the list of wrong answers for part 2
 func (d *Day[Input, Cache]) WithPart2WrongAnswer(answer, hint string) *Day[Input, Cache] {
 	d.wrongPart2Answers = append(d.wrongPart2Answers, wrongAnswer{answer, hint})
+	return d
+}
+
+func (d *Day[Input, Cache]) WithExpectedAnswers(part1, part2 string) *Day[Input, Cache] {
+	d.expectedPart1Answer = part1
+	d.expectedPart2Answer = part2
 	return d
 }
 
@@ -98,7 +126,7 @@ func (d *Day[Input, Cache]) Run() {
 	}
 	d.log.Info().Str("duration", time.Since(readStart).String()).Msg("days input parsed")
 
-	runPart := func(partNum int, fn Part[Input], wrongAnswers []wrongAnswer) {
+	runPart := func(partNum int, fn Part[Input], expectedAnswer string, wrongAnswers []wrongAnswer) {
 		if fn != nil {
 			logger := d.log.With().Int("_part", 1).Logger()
 
@@ -110,6 +138,12 @@ func (d *Day[Input, Cache]) Run() {
 				os.Exit(1)
 				return
 			} else {
+				if expectedAnswer != "" && answer != expectedAnswer {
+					logger.Error().Caller(1).Str("duration", dur.String()).Str("got", answer).Str("expected", expectedAnswer).Msg("part returned wrong answer")
+					os.Exit(1)
+					return
+				}
+
 				for _, wrongAnswer := range wrongAnswers {
 					if wrongAnswer.value == answer {
 						logger.Warn().Caller(1).Str("duration", dur.String()).Str("answer", answer).Str("hint", wrongAnswer.hint).Msg("part answer incorrect")
@@ -117,6 +151,7 @@ func (d *Day[Input, Cache]) Run() {
 						return
 					}
 				}
+
 				logger.Info().Caller(1).Str("duration", dur.String()).Str("answer", answer).Msg("part complete")
 			}
 		} else {
@@ -125,8 +160,8 @@ func (d *Day[Input, Cache]) Run() {
 	}
 
 	// Run part 1 if it exists
-	runPart(1, d.part1, d.wrongPart1Answers)
-	runPart(2, d.part2, d.wrongPart2Answers)
+	runPart(1, d.part1, d.expectedPart1Answer, d.wrongPart1Answers)
+	runPart(2, d.part2, d.expectedPart2Answer, d.wrongPart2Answers)
 }
 
 // Test runs the given parts with the given input and asserts the answers
