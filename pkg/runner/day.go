@@ -164,6 +164,16 @@ func (d *Day[Input, Cache]) Run() {
 	runPart(2, d.part2, d.expectedPart2Answer, d.wrongPart2Answers)
 }
 
+// Output returns an output path for the day
+func Output(day int) string {
+	dir := filepath.Join(repoDir, "outputs")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		log.Fatal().Err(err).Str("dir", dir).Msg("failed to create output directory")
+	}
+
+	return filepath.Join(dir, fmt.Sprintf("day%02d", day))
+}
+
 // Test runs the given parts with the given input and asserts the answers
 func (d *Day[Input, Cache]) Test(t *testing.T, part1TestInput, part1ExpectedAnswer, part2estInput, part2ExpectedAnswer string) {
 	t.Helper()
