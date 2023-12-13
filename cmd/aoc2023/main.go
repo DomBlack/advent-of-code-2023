@@ -20,6 +20,8 @@ import (
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day09"
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day10"
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day11"
+	_ "github.com/DomBlack/advent-of-code-2023/internal/day12"
+	_ "github.com/DomBlack/advent-of-code-2023/internal/day13"
 )
 
 func main() {
