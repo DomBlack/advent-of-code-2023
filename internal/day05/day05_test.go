@@ -41,5 +41,5 @@ humidity-to-location map:
 56 93 4
 `
 
-	Day05.Test(t, input, "35", input, "46")
+	Day05.Test(t, input, 35, input, 46)
 }

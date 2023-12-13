@@ -13,7 +13,7 @@ import (
 )
 
 var Day04 = runner.NewStreamingDay(4, parseCards, part1, part2).
-	WithExpectedAnswers("25571", "8805731")
+	WithExpectedAnswers(25571, 8805731)
 
 type Card struct {
 	Num            int
@@ -77,7 +77,7 @@ func numbersToSortedSlice(str string) ([]int, error) {
 	return rtn, nil
 }
 
-func part1(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err error) {
+func part1(log zerolog.Logger, input stream.Stream[*Card]) (answer int, err error) {
 	cardPoints := stream.Map(input, func(card *Card) (int, error) {
 		points := 0
 		playedIdx := 0
@@ -107,10 +107,10 @@ func part1(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err e
 		return points, nil
 	})
 
-	return stream.SumToString(cardPoints)
+	return stream.Sum(cardPoints)
 }
 
-func part2(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err error) {
+func part2(log zerolog.Logger, input stream.Stream[*Card]) (answer int, err error) {
 	peakable := stream.Lookahead(input)
 
 	cardPoints := stream.Map[*Card, int](peakable, func(card *Card) (int, error) {
@@ -159,5 +159,5 @@ func part2(log zerolog.Logger, input stream.Stream[*Card]) (answer string, err e
 		return card.Copies, nil
 	})
 
-	return stream.SumToString(cardPoints)
+	return stream.Sum(cardPoints)
 }

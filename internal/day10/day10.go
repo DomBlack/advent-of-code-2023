@@ -2,7 +2,6 @@ package day10
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/algorithms/floodfill"
@@ -12,21 +11,21 @@ import (
 )
 
 var Day10 = runner.NewDay(10, buildPipeMaze, part1, part2).
-	WithExpectedAnswers("6890", "453")
+	WithExpectedAnswers(6890, 453)
 
-func part1(log zerolog.Logger, input Maze) (answer string, err error) {
-	return strconv.Itoa(input.Length / 2), nil
+func part1(log zerolog.Logger, input Maze) (answer int, err error) {
+	return input.Length / 2, nil
 }
 
-func part2(log zerolog.Logger, input Maze) (answer string, err error) {
+func part2(log zerolog.Logger, input Maze) (answer int, err error) {
 	input.DebugOutputFile = runner.Output(10)
 
 	enclosedArea, err := input.EnclosedArea()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to calculate enclosed area")
+		return 0, errors.Wrap(err, "failed to calculate enclosed area")
 	}
 
-	return strconv.Itoa(enclosedArea), nil
+	return enclosedArea, nil
 }
 
 type Maze struct {

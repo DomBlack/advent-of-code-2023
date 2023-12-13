@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,15 +22,19 @@ type Day[Input, Cache any] struct {
 	inputPreprocessor   func([]byte) (Cache, error)
 	cacheToInput        func(Cache) Input
 	part1               Part[Input]
-	wrongPart1Answers   []wrongAnswer
-	expectedPart1Answer string
+	part1Answers        answers
 	part2               Part[Input]
-	wrongPart2Answers   []wrongAnswer
-	expectedPart2Answer string
+	part2Answers        answers
+	expectedPart2Answer *int
+}
+
+type answers struct {
+	min, max int
+	answer   *int
 }
 
 // Part represents a function which given the input will return the answer for that part of the day
-type Part[Input any] func(log zerolog.Logger, input Input) (answer string, err error)
+type Part[Input any] func(log zerolog.Logger, input Input) (answer int, err error)
 
 // NewStreamingDay creates a day which takes a parser to convert the input bytes into a stream of inputs,
 // which the part 1 and part 2 functions can then use.
@@ -42,9 +47,11 @@ func NewStreamingDay[Input any](day int, parser func([]byte) stream.Stream[Input
 		cacheToInput: func(cache []Input) stream.Stream[Input] {
 			return stream.From(cache)
 		},
-		day:   day,
-		part1: part1,
-		part2: part2,
+		day:          day,
+		part1:        part1,
+		part1Answers: answers{min: math.MinInt, max: math.MaxInt},
+		part2:        part2,
+		part2Answers: answers{min: math.MinInt, max: math.MaxInt},
 	}
 
 	days[day] = d
@@ -63,9 +70,11 @@ func NewDay[Input any](day int, parser func([]byte) (Input, error), part1, part2
 		cacheToInput: func(cache Input) Input {
 			return cache
 		},
-		day:   day,
-		part1: part1,
-		part2: part2,
+		day:          day,
+		part1:        part1,
+		part1Answers: answers{min: math.MinInt, max: math.MaxInt},
+		part2:        part2,
+		part2Answers: answers{min: math.MinInt, max: math.MaxInt},
 	}
 	days[day] = d
 
@@ -76,26 +85,9 @@ func (d *Day[Input, Cache]) Day() int {
 	return d.day
 }
 
-type wrongAnswer struct {
-	value string
-	hint  string
-}
-
-// WithWrongPart1Answer adds a wrong answer to the list of wrong answers for part 1
-func (d *Day[Input, Cache]) WithWrongPart1Answer(answer, hint string) *Day[Input, Cache] {
-	d.wrongPart1Answers = append(d.wrongPart1Answers, wrongAnswer{answer, hint})
-	return d
-}
-
-// WithPart2WrongAnswer adds a wrong answer to the list of wrong answers for part 2
-func (d *Day[Input, Cache]) WithPart2WrongAnswer(answer, hint string) *Day[Input, Cache] {
-	d.wrongPart2Answers = append(d.wrongPart2Answers, wrongAnswer{answer, hint})
-	return d
-}
-
-func (d *Day[Input, Cache]) WithExpectedAnswers(part1, part2 string) *Day[Input, Cache] {
-	d.expectedPart1Answer = part1
-	d.expectedPart2Answer = part2
+func (d *Day[Input, Cache]) WithExpectedAnswers(part1, part2 int) *Day[Input, Cache] {
+	d.part1Answers.answer = &part1
+	d.part2Answers.answer = &part2
 	return d
 }
 
@@ -126,7 +118,7 @@ func (d *Day[Input, Cache]) Run() {
 	}
 	d.log.Info().Str("duration", time.Since(readStart).String()).Msg("days input parsed")
 
-	runPart := func(partNum int, fn Part[Input], expectedAnswer string, wrongAnswers []wrongAnswer) {
+	runPart := func(partNum int, fn Part[Input], answers answers) {
 		if fn != nil {
 			logger := d.log.With().Int("_part", 1).Logger()
 
@@ -138,21 +130,25 @@ func (d *Day[Input, Cache]) Run() {
 				os.Exit(1)
 				return
 			} else {
-				if expectedAnswer != "" && answer != expectedAnswer {
-					logger.Error().Caller(1).Str("duration", dur.String()).Str("got", answer).Str("expected", expectedAnswer).Msg("part returned wrong answer")
+				if answers.answer != nil && answer != *answers.answer {
+					logger.Error().Caller(1).Str("duration", dur.String()).Int("got", answer).Int("expected", *answers.answer).Msg("part returned wrong answer")
 					os.Exit(1)
 					return
 				}
 
-				for _, wrongAnswer := range wrongAnswers {
-					if wrongAnswer.value == answer {
-						logger.Warn().Caller(1).Str("duration", dur.String()).Str("answer", answer).Str("hint", wrongAnswer.hint).Msg("part answer incorrect")
-						os.Exit(1)
-						return
-					}
+				if answers.min >= answer {
+					logger.Error().Caller(1).Str("duration", dur.String()).Int("got", answer).Int("min", answers.min).Msg("part returned answer below hinted minimum")
+					os.Exit(1)
+					return
 				}
 
-				logger.Info().Caller(1).Str("duration", dur.String()).Str("answer", answer).Msg("part complete")
+				if answers.max < answer {
+					logger.Error().Caller(1).Str("duration", dur.String()).Int("got", answer).Int("max", answers.max).Msg("part returned answer above hinted maximum")
+					os.Exit(1)
+					return
+				}
+
+				logger.Info().Caller(1).Str("duration", dur.String()).Int("answer", answer).Msg("part complete")
 			}
 		} else {
 			d.log.Warn().Caller(1).Int("part", 1).Msg("part not implemented")
@@ -160,8 +156,8 @@ func (d *Day[Input, Cache]) Run() {
 	}
 
 	// Run part 1 if it exists
-	runPart(1, d.part1, d.expectedPart1Answer, d.wrongPart1Answers)
-	runPart(2, d.part2, d.expectedPart2Answer, d.wrongPart2Answers)
+	runPart(1, d.part1, d.part1Answers)
+	runPart(2, d.part2, d.part2Answers)
 }
 
 // Output returns an output path for the day
@@ -175,7 +171,7 @@ func Output(day int) string {
 }
 
 // Test runs the given parts with the given input and asserts the answers
-func (d *Day[Input, Cache]) Test(t *testing.T, part1TestInput, part1ExpectedAnswer, part2estInput, part2ExpectedAnswer string) {
+func (d *Day[Input, Cache]) Test(t *testing.T, part1TestInput string, part1ExpectedAnswer int, part2estInput string, part2ExpectedAnswer int) {
 	t.Helper()
 	t.Parallel()
 
@@ -184,33 +180,29 @@ func (d *Day[Input, Cache]) Test(t *testing.T, part1TestInput, part1ExpectedAnsw
 }
 
 // TestPart1 runs the given part 1 with the given input and asserts the answer
-func (d *Day[Input, Cache]) TestPart1(t *testing.T, input, expectedAnswer string) {
+func (d *Day[Input, Cache]) TestPart1(t *testing.T, input string, expectedAnswer int) {
 	t.Helper()
 
 	d.testPart(t, fmt.Sprintf("part1_%s", input), 1, d.part1, input, expectedAnswer)
 }
 
 // TestPart2 runs the given part 2 with the given input and asserts the answer
-func (d *Day[Input, Cache]) TestPart2(t *testing.T, input, expectedAnswer string) {
+func (d *Day[Input, Cache]) TestPart2(t *testing.T, input string, expectedAnswer int) {
 	t.Helper()
 	d.testPart(t, fmt.Sprintf("part2_%s", input), 2, d.part2, input, expectedAnswer)
 }
 
 // testPart runs the given part with the given input and asserts the answer
-func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int, fn Part[Input], input, expectedAnswer string) {
+func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int, fn Part[Input], input string, expectedAnswer int) {
 	t.Helper()
 	t.Run(testName, func(t *testing.T) {
 		t.Parallel()
 
-		if fn == nil && expectedAnswer == "" {
+		if fn == nil {
 			t.Skip("Part not implemented")
 		}
-
-		if fn == nil {
-			assert.FailNow(t, "part not implemented, but an expected answer was provided")
-		}
-		if expectedAnswer == "" {
-			assert.FailNow(t, "part implemented, but not expected answer was provided")
+		if fn == nil && expectedAnswer != 0 {
+			assert.FailNow(t, "answer provided, but part not implemented yet")
 		}
 
 		// drop to trace level for tests

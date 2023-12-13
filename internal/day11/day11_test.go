@@ -17,5 +17,5 @@ func Test_Day11(t *testing.T) {
 .......#..
 #...#.....
 `
-	Day11.Test(t, input, "374", input, "82000210")
+	Day11.Test(t, input, 374, input, 82000210)
 }

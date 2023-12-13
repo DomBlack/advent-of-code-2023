@@ -26,5 +26,5 @@ LR
 XXX = (XXX, XXX)
 `
 
-	Day08.Test(t, input1, "6", input2, "6")
+	Day08.Test(t, input1, 6, input2, 6)
 }

@@ -3,16 +3,15 @@ package day05
 import (
 	"math"
 	"slices"
-	"strconv"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
 	"github.com/rs/zerolog"
 )
 
 var Day05 = runner.NewDay(5, parseMaps, part1, part2).
-	WithExpectedAnswers("226172555", "47909639")
+	WithExpectedAnswers(226172555, 47909639)
 
-func part1(log zerolog.Logger, input Maps) (answer string, err error) {
+func part1(log zerolog.Logger, input Maps) (answer int, err error) {
 	lowest := math.MaxInt
 
 	for _, seed := range input.Seeds {
@@ -29,10 +28,10 @@ func part1(log zerolog.Logger, input Maps) (answer string, err error) {
 		}
 	}
 
-	return strconv.Itoa(lowest), nil
+	return lowest, nil
 }
 
-func part2(log zerolog.Logger, input Maps) (answer string, err error) {
+func part2(log zerolog.Logger, input Maps) (answer int, err error) {
 	offsets, err := MapsToMergedOffset(
 		input.SeedToSoil,
 		input.SoilToFertilizer,
@@ -43,7 +42,7 @@ func part2(log zerolog.Logger, input Maps) (answer string, err error) {
 		input.HumidityToLocation,
 	)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	seedToLocations := offsets.ToMap()
@@ -73,5 +72,5 @@ func part2(log zerolog.Logger, input Maps) (answer string, err error) {
 		}
 	}
 
-	return strconv.Itoa(lowest), nil
+	return lowest, nil
 }

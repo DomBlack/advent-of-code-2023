@@ -11,5 +11,5 @@ func Test_Day09(t *testing.T) {
 10 13 16 21 30 45
 `
 
-	Day09.Test(t, input, "114", input, "2")
+	Day09.Test(t, input, 114, input, 2)
 }

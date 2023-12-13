@@ -31,7 +31,7 @@ L--J.L7...LJS7F-7L7.
 ....L---J.LJ.LJLJ...
 `
 
-	Day10.Test(t, input1, "8", input2, "")
+	Day10.Test(t, input1, 8, input2, 8)
 }
 
 func Test_Day10_Part2(t *testing.T) {

@@ -1,7 +1,6 @@
 package day11
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/datastructures/vectors/vec2"
@@ -11,18 +10,18 @@ import (
 )
 
 var Day11 = runner.NewDay(11, parseUniverse, part1, part2).
-	WithExpectedAnswers("9724940", "569052586852")
+	WithExpectedAnswers(9724940, 569052586852)
 
-func part1(log zerolog.Logger, input Universe) (answer string, err error) {
+func part1(log zerolog.Logger, input Universe) (answer int, err error) {
 	expanded := input.expand(2)
 
-	return strconv.Itoa(expanded.sumOfLengths(log)), nil
+	return expanded.sumOfLengths(log), nil
 }
 
-func part2(log zerolog.Logger, input Universe) (answer string, err error) {
+func part2(log zerolog.Logger, input Universe) (answer int, err error) {
 	expanded := input.expand(1000000)
 
-	return strconv.Itoa(expanded.sumOfLengths(log)), nil
+	return expanded.sumOfLengths(log), nil
 }
 
 type Universe []Galaxy

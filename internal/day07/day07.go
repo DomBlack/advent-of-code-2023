@@ -15,13 +15,13 @@ var Day07 = runner.NewStreamingDay(7, parseHands,
 	solver(func(hand Hand) (Hand, error) { return hand, nil }),
 	solver(withJokerCards),
 ).
-	WithExpectedAnswers("250453939", "248652697")
+	WithExpectedAnswers(250453939, 248652697)
 
-func solver(mapper func(Hand) (Hand, error)) func(log zerolog.Logger, input stream.Stream[Hand]) (answer string, err error) {
-	return func(log zerolog.Logger, input stream.Stream[Hand]) (answer string, err error) {
+func solver(mapper func(Hand) (Hand, error)) func(log zerolog.Logger, input stream.Stream[Hand]) (answer int, err error) {
+	return func(log zerolog.Logger, input stream.Stream[Hand]) (answer int, err error) {
 		hands, err := stream.Collect(stream.Map(input, mapper))
 		if err != nil {
-			return "", err
+			return 0, err
 		}
 
 		slices.SortFunc(hands, func(a, b Hand) int {
@@ -46,7 +46,7 @@ func solver(mapper func(Hand) (Hand, error)) func(log zerolog.Logger, input stre
 			winnings += hand.Bid * (i + 1)
 		}
 
-		return strconv.Itoa(winnings), nil
+		return winnings, nil
 	}
 }
 

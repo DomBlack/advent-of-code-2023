@@ -11,9 +11,9 @@ import (
 )
 
 var Day03 = runner.NewStreamingDay(3, parseSchematic, part1, part2).
-	WithExpectedAnswers("539590", "80703636")
+	WithExpectedAnswers(539590, 80703636)
 
-func part1(log zerolog.Logger, input stream.Stream[Token]) (answer string, err error) {
+func part1(log zerolog.Logger, input stream.Stream[Token]) (answer int, err error) {
 	parts, numbers := stream.Partition(input, func(token Token) (bool, error) {
 		if token.Type == Part {
 			return true, nil
@@ -64,10 +64,10 @@ func part1(log zerolog.Logger, input stream.Stream[Token]) (answer string, err e
 		return strconv.Atoi(number.Value)
 	})
 
-	return stream.SumToString(partNumbersAsInts)
+	return stream.Sum(partNumbersAsInts)
 }
 
-func part2(log zerolog.Logger, input stream.Stream[Token]) (answer string, err error) {
+func part2(log zerolog.Logger, input stream.Stream[Token]) (answer int, err error) {
 	parts, numbers := stream.Partition(input, func(token Token) (bool, error) {
 		if token.Type == Part {
 			return true, nil
@@ -123,7 +123,7 @@ func part2(log zerolog.Logger, input stream.Stream[Token]) (answer string, err e
 		}
 	})
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	resettableGearPtrs.Reset()
@@ -143,5 +143,5 @@ func part2(log zerolog.Logger, input stream.Stream[Token]) (answer string, err e
 		return product, nil
 	})
 
-	return stream.SumToString(gearRatios)
+	return stream.Sum(gearRatios)
 }

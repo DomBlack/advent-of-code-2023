@@ -2,7 +2,6 @@ package day08
 
 import (
 	"io"
-	"strconv"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/maths"
 	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
@@ -13,7 +12,7 @@ import (
 
 var Day08 = runner.NewDay(8, parseMap, part1, part2)
 
-func part1(log zerolog.Logger, input Map) (answer string, err error) {
+func part1(log zerolog.Logger, input Map) (answer int, err error) {
 	// Follow the instructions
 	node := input.Root
 	steps := 0
@@ -32,10 +31,10 @@ func part1(log zerolog.Logger, input Map) (answer string, err error) {
 		steps++
 	}
 
-	return strconv.Itoa(steps), nil
+	return steps, nil
 }
 
-func part2(log zerolog.Logger, input Map) (answer string, err error) {
+func part2(log zerolog.Logger, input Map) (answer int, err error) {
 	lengths := make([]int, len(input.NodesEndingWithA))
 
 	// Calculate the length of each of the parallel paths
@@ -62,7 +61,7 @@ func part2(log zerolog.Logger, input Map) (answer string, err error) {
 	}
 
 	// Now find the lowest common multiple of all the lengths
-	return strconv.Itoa(maths.LCM(lengths)), nil
+	return maths.LCM(lengths), nil
 }
 
 type Instruction uint8

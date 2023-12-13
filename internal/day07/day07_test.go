@@ -13,5 +13,5 @@ KTJJT 220
 QQQJA 483
 `
 
-	Day07.Test(t, input, "6440", input, "5905")
+	Day07.Test(t, input, 6440, input, 5905)
 }

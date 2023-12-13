@@ -17,7 +17,7 @@ func Test_Day12(t *testing.T) {
 ????.######..#####. 1,6,5
 ?###???????? 3,2,1
 `
-	Day12.Test(t, input, "21", input, "525152")
+	Day12.Test(t, input, 21, input, 525152)
 }
 
 func Test_Day12_Options(t *testing.T) {

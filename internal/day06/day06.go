@@ -12,39 +12,39 @@ import (
 
 var Day06 = runner.NewDay(6, parseBaseInput, part1, part2)
 
-func part1(log zerolog.Logger, input baseInput) (answer string, err error) {
+func part1(log zerolog.Logger, input baseInput) (answer int, err error) {
 	result := 1
 
 	times := strings.Fields(input.TimeLine)
 	distances := strings.Fields(input.DistanceLine)
 
 	if len(times) != len(distances) {
-		return "", errors.Newf("mismatched number of times and distances: %d != %d", len(times), len(distances))
+		return 0, errors.Newf("mismatched number of times and distances: %d != %d", len(times), len(distances))
 	}
 
 	for i := range times {
 		race, err := parseRace(times[i], distances[i])
 		if err != nil {
-			return "", err
+			return 0, err
 		}
 
 		result *= race.NumberWinningMethods()
 
 	}
 
-	return strconv.Itoa(result), nil
+	return result, nil
 }
 
-func part2(log zerolog.Logger, input baseInput) (answer string, err error) {
+func part2(log zerolog.Logger, input baseInput) (answer int, err error) {
 	race, err := parseRace(
 		strings.ReplaceAll(input.TimeLine, " ", ""),
 		strings.ReplaceAll(input.DistanceLine, " ", ""),
 	)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	return strconv.Itoa(race.NumberWinningMethods()), nil
+	return race.NumberWinningMethods(), nil
 }
 
 type Race struct {

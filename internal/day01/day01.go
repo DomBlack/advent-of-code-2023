@@ -9,7 +9,7 @@ import (
 )
 
 var Day01 = runner.NewStreamingDay(1, stream.LinesFrom, implementation(part1Tree), implementation(part2Tree)).
-	WithExpectedAnswers("54630", "54770")
+	WithExpectedAnswers(54630, 54770)
 
 var part1Tree = trie.New[int]().
 	MustInsert("0", 0).
@@ -44,8 +44,8 @@ var part2Tree = trie.New[int]().
 	MustInsert("eight", 8).
 	MustInsert("nine", 9)
 
-func implementation(tree *trie.Trie[int]) func(log zerolog.Logger, input stream.Stream[string]) (answer string, err error) {
-	return func(log zerolog.Logger, input stream.Stream[string]) (answer string, err error) {
+func implementation(tree *trie.Trie[int]) func(log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
+	return func(log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
 		digitsPerLine := stream.Map(input, func(line string) (int, error) {
 			matches := tree.SubstrMatches(line)
 
@@ -60,6 +60,6 @@ func implementation(tree *trie.Trie[int]) func(log zerolog.Logger, input stream.
 			return first*10 + last, nil
 		})
 
-		return stream.SumToString(digitsPerLine)
+		return stream.Sum(digitsPerLine)
 	}
 }

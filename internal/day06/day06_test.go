@@ -10,5 +10,5 @@ Time:      7  15   30
 Distance:  9  40  200
 `
 
-	Day06.Test(t, input, "288", input, "71503")
+	Day06.Test(t, input, 288, input, 71503)
 }
