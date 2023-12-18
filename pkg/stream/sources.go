@@ -38,16 +38,39 @@ func (l *sliceSource[V]) Next() (next V, err error) {
 
 // LinesFrom returns a stream of lines from the given input.
 func LinesFrom(input []byte) Stream[string] {
-	return lineSource{
+	return scannerSource{
 		scanner: bufio.NewScanner(bytes.NewReader(bytes.TrimSpace(input))),
 	}
 }
 
-type lineSource struct {
+// SplitBy returns a stream of strings split by the given byte.
+func SplitBy(input []byte, split byte) Stream[string] {
+	s := scannerSource{
+		scanner: bufio.NewScanner(bytes.NewReader(bytes.TrimSpace(input))),
+	}
+	s.scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+		if i := bytes.IndexByte(data, split); i >= 0 {
+			// We have a full newline-terminated line.
+			return i + 1, data[0:i], nil
+		}
+		// If we're at EOF, we have a final, non-terminated line. Return it.
+		if atEOF {
+			return len(data), data, nil
+		}
+		// Request more data.
+		return 0, nil, nil
+	})
+	return s
+}
+
+type scannerSource struct {
 	scanner *bufio.Scanner
 }
 
-func (l lineSource) Next() (string, error) {
+func (l scannerSource) Next() (string, error) {
 	if !l.scanner.Scan() {
 		err := l.scanner.Err()
 		if err != nil {
