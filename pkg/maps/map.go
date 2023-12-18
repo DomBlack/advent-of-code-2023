@@ -1,6 +1,7 @@
 package maps
 
 import (
+	"image/color"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -27,6 +28,9 @@ type Map[TileType Tile] struct {
 	// EmptyType represents empty space in the map and
 	// is by default the zero value of [Tile].
 	EmptyType TileType
+
+	captureFrames bool              // Are we capturing frames?
+	Frames        []frame[TileType] // The frames of the we've captured
 }
 
 // From2DSlices creates a new map from the given 2D slice of tiles.
@@ -61,11 +65,18 @@ func From2DSlices[TileType Tile](tiles [][]TileType) (*Map[TileType], error) {
 
 // Tile represents a single tile in a [Map].
 type Tile interface {
-	~int | ~uint | ~int8 | ~uint8 | ~int16 | ~uint16 | ~int32 | ~uint32 | ~int64 | ~uint64 | ~float32 | ~float64
+	~int | ~uint | ~int8 | ~uint8 | ~int16 | ~uint16 | ~int32 | ~uint32 | ~int64 | ~uint64
+
+	// Valid returns true if this tile is a valid tile.
+	Valid() bool
 
 	// Rune should return the single rune that represents
 	// this tile.
 	Rune() rune
+
+	// Colour is the colour of the tile when displayed
+	// in an animation.
+	Colour() color.Color
 }
 
 // PositionOf returns the x, y position of the given index.

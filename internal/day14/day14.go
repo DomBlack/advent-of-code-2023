@@ -2,6 +2,7 @@ package day14
 
 import (
 	"fmt"
+	"image/color"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/maps"
 	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
@@ -37,19 +38,25 @@ func part2(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
 	const spinCount = 1_000_000_000
 	cache := make(map[string]int)
 
-	spinCycle := func() {
+	spinCycle := func(i int) {
 		// Run the spin cycle (North, West, South, East)
 		maps.Tilt(input, maps.North, Rounded)
 		maps.Tilt(input, maps.West, Rounded)
 		maps.Tilt(input, maps.South, Rounded)
 		maps.Tilt(input, maps.East, Rounded)
+		input.CaptureFrame(fmt.Sprintf("Spin Cycle: %d", i), 1)
+	}
+
+	file := runner.Output(14)
+	if file != "" {
+		input.StartCapturingFrames()
 	}
 
 	// Run the spin cycle 1 billion times or until we find a loop
 	var cacheKey string
 	i := 1
 	for i < spinCount {
-		spinCycle()
+		spinCycle(i)
 
 		cacheKey = input.String()
 		if _, ok := cache[cacheKey]; ok {
@@ -69,11 +76,21 @@ func part2(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
 	// Fast forward to the end
 	startAt := spinCount - ((spinCount - loopStart) % loopLength)
 	log.Debug().Int("iteration", startAt).Msg("fast forwarding to end")
-	for i := startAt; i < spinCount; i++ {
-		spinCycle()
+	for i = startAt; i < spinCount; i++ {
+		spinCycle(i)
 	}
 
-	return load(input), nil
+	answer = load(input)
+
+	// Save the animation
+	if file != "" {
+		input.StopCapturingFrames(fmt.Sprintf("Spin Cycle: %d - Answer: %d", i, answer))
+		if err := input.SaveAnimationGIF(file + ".gif"); err != nil {
+			return 0, errors.Wrap(err, "failed to save animation gif")
+		}
+	}
+
+	return answer, nil
 }
 
 func load(m *maps.Map[Rocks]) (sum int) {
@@ -93,7 +110,13 @@ const (
 	Empty Rocks = iota
 	Rounded
 	Cubed
+
+	eof
 )
+
+func (r Rocks) Valid() bool {
+	return r < eof
+}
 
 func (r Rocks) Rune() rune {
 	switch r {
@@ -103,6 +126,19 @@ func (r Rocks) Rune() rune {
 		return 'O'
 	case Cubed:
 		return '#'
+	default:
+		panic(fmt.Sprintf("invalid rock type: %v", r))
+	}
+}
+
+func (r Rocks) Colour() color.Color {
+	switch r {
+	case Empty:
+		return color.RGBA{R: 255, G: 255, B: 255, A: 255} // White
+	case Rounded:
+		return color.RGBA{R: 0, G: 255, B: 0, A: 255} // Green
+	case Cubed:
+		return color.RGBA{R: 0, G: 0, B: 0, A: 255} // Black
 	default:
 		panic(fmt.Sprintf("invalid rock type: %v", r))
 	}
