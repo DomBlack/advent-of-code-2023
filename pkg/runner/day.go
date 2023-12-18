@@ -17,7 +17,6 @@ import (
 
 // Day represents a day of the advent of code
 type Day[Input, Cache any] struct {
-	log                 zerolog.Logger
 	day                 int
 	inputPreprocessor   func([]byte) (Cache, error)
 	cacheToInput        func(Cache) Input
@@ -40,7 +39,6 @@ type Part[Input any] func(log zerolog.Logger, input Input) (answer int, err erro
 // which the part 1 and part 2 functions can then use.
 func NewStreamingDay[Input any](day int, parser func([]byte) stream.Stream[Input], part1, part2 Part[stream.Stream[Input]]) *Day[stream.Stream[Input], []Input] {
 	d := &Day[stream.Stream[Input], []Input]{
-		log: log.With().Int("_day", day).Logger().Level(zerolog.InfoLevel),
 		inputPreprocessor: func(bytes []byte) ([]Input, error) {
 			return stream.Collect(parser(bytes))
 		},
@@ -65,7 +63,6 @@ func NewStreamingDay[Input any](day int, parser func([]byte) stream.Stream[Input
 // See [NewStreamingDay] for a stream processing version
 func NewDay[Input any](day int, parser func([]byte) (Input, error), part1, part2 Part[Input]) *Day[Input, Input] {
 	d := &Day[Input, Input]{
-		log:               log.With().Int("_day", day).Logger().Level(zerolog.InfoLevel),
 		inputPreprocessor: parser,
 		cacheToInput: func(cache Input) Input {
 			return cache
@@ -91,20 +88,23 @@ func (d *Day[Input, Cache]) WithExpectedAnswers(part1, part2 int) *Day[Input, Ca
 	return d
 }
 
-func (d *Day[Input, Cache]) DisableLogging() {
-	d.log = d.log.Level(zerolog.Disabled)
+func (d *Day[Input, Cache]) WithPart2KnownMax(max int) *Day[Input, Cache] {
+	d.part2Answers.max = max
+	return d
 }
 
 // Run executes the given parts with the given input
 //
 // If an error is encountered, the program will exit with a non-zero exit code
 func (d *Day[Input, Cache]) Run() {
+	logger := log.With().Int("_day", d.day).Logger()
+
 	// Read the input
 	readStart := time.Now()
 	inputFile := filepath.Join(repoDir, "inputs", fmt.Sprintf("day%02d.txt", d.day))
 	input, err := os.ReadFile(inputFile)
 	if err != nil {
-		d.log.Err(err).Str("file", inputFile).Msg("failed to read input file")
+		logger.Err(err).Str("file", inputFile).Msg("failed to read input file")
 		os.Exit(1)
 		return
 	}
@@ -112,15 +112,15 @@ func (d *Day[Input, Cache]) Run() {
 	// Preprocess the input
 	cacheData, err := d.inputPreprocessor(input)
 	if err != nil {
-		d.log.Err(err).Msg("failed to preprocess input")
+		logger.Err(err).Msg("failed to preprocess input")
 		os.Exit(1)
 		return
 	}
-	d.log.Info().Str("duration", time.Since(readStart).String()).Msg("days input parsed")
+	logger.Info().Str("duration", time.Since(readStart).String()).Msg("days input parsed")
 
 	runPart := func(partNum int, fn Part[Input], answers answers) {
 		if fn != nil {
-			logger := d.log.With().Int("_part", 1).Logger()
+			logger := logger.With().Int("_part", 1).Logger()
 
 			start := time.Now()
 			answer, err := fn(logger, d.cacheToInput(cacheData))
@@ -142,7 +142,7 @@ func (d *Day[Input, Cache]) Run() {
 					return
 				}
 
-				if answers.max < answer {
+				if answers.max <= answer {
 					logger.Error().Caller(1).Str("duration", dur.String()).Int("got", answer).Int("max", answers.max).Msg("part returned answer above hinted maximum")
 					os.Exit(1)
 					return
@@ -151,7 +151,7 @@ func (d *Day[Input, Cache]) Run() {
 				logger.Info().Caller(1).Str("duration", dur.String()).Int("answer", answer).Msg("part complete")
 			}
 		} else {
-			d.log.Warn().Caller(1).Int("part", 1).Msg("part not implemented")
+			logger.Warn().Caller(1).Int("part", 1).Msg("part not implemented")
 		}
 	}
 
@@ -206,7 +206,7 @@ func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int,
 		}
 
 		// drop to trace level for tests
-		testLogger := d.log.Level(zerolog.TraceLevel).With().Int("_part", partNum).Logger()
+		testLogger := log.Level(zerolog.TraceLevel).With().Int("_part", partNum).Logger()
 
 		preppedData, err := d.inputPreprocessor([]byte(strings.TrimSpace(input)))
 		assert.NoError(t, err, "Failed to preprocess input")

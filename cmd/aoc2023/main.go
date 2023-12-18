@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/pflag"
@@ -22,13 +23,21 @@ import (
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day11"
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day12"
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day13"
+	_ "github.com/DomBlack/advent-of-code-2023/internal/day14"
 )
 
 func main() {
 	var onlyDay int
+	var verboseLevel int
 	pflag.IntVarP(&onlyDay, "day", "d", 0, "Only run this day")
-
+	pflag.CountVarP(&verboseLevel, "verbose", "v", "Increase verbosity")
 	pflag.Parse()
+
+	newLevel := zerolog.Level(int(zerolog.InfoLevel) - verboseLevel)
+	if newLevel < zerolog.TraceLevel {
+		newLevel = zerolog.TraceLevel
+	}
+	log.Logger = log.Level(newLevel)
 
 	if onlyDay != 0 {
 		log.Info().Int("day", onlyDay).Msg("Only running single day")

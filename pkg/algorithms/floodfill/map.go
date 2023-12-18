@@ -11,7 +11,7 @@ import (
 )
 
 var palette = []color.Color{
-	color.RGBA{R: 255, G: 255, B: 255, A: 255}, // 0 (Empty): White
+	color.RGBA{R: 255, G: 255, B: 255, A: 255}, // 0 (EmptyType): White
 	color.RGBA{R: 0, G: 0, B: 0, A: 255},       // 1 (Wall): Black
 	color.RGBA{R: 0, G: 255, B: 0, A: 255},     // 2 (Fill): Green
 }

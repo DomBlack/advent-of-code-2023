@@ -27,7 +27,7 @@ func part2(log zerolog.Logger, input Universe) (answer int, err error) {
 type Universe []Galaxy
 
 type Galaxy struct {
-	Position vec2.Vec2i
+	Position vec2.Vec2
 }
 
 func parseUniverse(input []byte) (Universe, error) {
@@ -47,7 +47,7 @@ func parseUniverse(input []byte) (Universe, error) {
 		case '.':
 			// no-op
 		case '#':
-			rtn = append(rtn, Galaxy{vec2.Vec2i{x, y}})
+			rtn = append(rtn, Galaxy{vec2.Vec2{x, y}})
 		default:
 			return nil, errors.Newf("Unknown character: %c", r)
 		}
