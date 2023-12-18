@@ -2,21 +2,19 @@ package maps
 
 import (
 	"fmt"
-
-	"github.com/DomBlack/advent-of-code-2023/pkg/datastructures/vectors/vec2"
 )
 
 // Rotate rotates the map in the given direction, which is one of
-// [vec2.North], [vec2.East], [vec2.South] & [vec2.West], which is
+// [North], [East], [South] & [West], which is
 // the equivalent of rotating the map 0, 90, 180 & 270 degrees
 //
 // Any other direction will result in a panic.
-func Rotate[TileType Tile](m *Map[TileType], direction vec2.Vec2) {
+func Rotate[TileType Tile](m *Map[TileType], direction Direction) {
 	switch direction {
-	case vec2.North:
+	case North:
 		// no-op, we're already facing up
 
-	case vec2.South:
+	case South:
 		for y := 0; y < m.Height/2; y++ {
 			for x := 0; x < m.Width; x++ {
 				originalIdx := y*m.Width + x
@@ -35,31 +33,50 @@ func Rotate[TileType Tile](m *Map[TileType], direction vec2.Vec2) {
 			}
 		}
 
-	case vec2.East:
-		newTiles := make([]TileType, m.Width*m.Height)
-		for y := 0; y < m.Height; y++ {
-			for x := 0; x < m.Width; x++ {
-				originalIdx := y*m.Width + x
-				rotatedIdx := x*m.Height + (m.Height - y - 1)
-				newTiles[rotatedIdx] = m.Tiles[originalIdx]
+	case East:
+		for layer := 0; layer < m.Height/2; layer++ {
+			first, last := layer, m.Width-1-layer
+			for i := first; i < last; i++ {
+				offset := i - first
+
+				topIdx := first*m.Width + i
+				leftIdx := (last-offset)*m.Width + first
+				bottomIdx := last*m.Width + (last - offset)
+				rightIdx := i*m.Width + last
+
+				top := m.Tiles[topIdx] // save top
+				m.Tiles[topIdx] = m.Tiles[leftIdx]
+				m.Tiles[leftIdx] = m.Tiles[bottomIdx]
+				m.Tiles[bottomIdx] = m.Tiles[rightIdx]
+				m.Tiles[rightIdx] = top // right <- saved top
 			}
 		}
-
-		m.Tiles = newTiles
 		m.Width, m.Height = m.Height, m.Width
 
-	case vec2.West:
-		newTiles := make([]TileType, m.Width*m.Height)
-		for y := 0; y < m.Height; y++ {
-			for x := 0; x < m.Width; x++ {
-				originalIdx := y*m.Width + x
-				rotatedIdx := (m.Width-x-1)*m.Height + y
-				newTiles[rotatedIdx] = m.Tiles[originalIdx]
+	case West:
+		for layer := 0; layer < m.Height/2; layer++ {
+			first, last := layer, m.Width-1-layer
+			for i := first; i < last; i++ {
+				offset := i - first
+
+				topIdx := first*m.Width + i
+				leftIdx := (last-offset)*m.Width + first
+				bottomIdx := last*m.Width + (last - offset)
+				rightIdx := i*m.Width + last
+
+				top := m.Tiles[topIdx] // save top
+				// right -> top
+				m.Tiles[topIdx] = m.Tiles[rightIdx]
+				// bottom -> right
+				m.Tiles[rightIdx] = m.Tiles[bottomIdx]
+				// left -> bottom
+				m.Tiles[bottomIdx] = m.Tiles[leftIdx]
+				// top -> left
+				m.Tiles[leftIdx] = top // left <- saved top
 			}
 		}
-
-		m.Tiles = newTiles
 		m.Width, m.Height = m.Height, m.Width
+
 	default:
 		panic(fmt.Sprintf("unsupported rotation direction: %s", direction))
 	}

@@ -3,7 +3,6 @@ package day14
 import (
 	"fmt"
 
-	"github.com/DomBlack/advent-of-code-2023/pkg/datastructures/vectors/vec2"
 	"github.com/DomBlack/advent-of-code-2023/pkg/maps"
 	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
 	"github.com/cockroachdb/errors"
@@ -29,7 +28,7 @@ var (
 )
 
 func part1(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
-	maps.Tilt(input, vec2.North, Rounded)
+	maps.Tilt(input, maps.North, Rounded)
 
 	return load(input), nil
 }
@@ -40,10 +39,10 @@ func part2(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
 
 	spinCycle := func() {
 		// Run the spin cycle (North, West, South, East)
-		maps.Tilt(input, vec2.North, Rounded)
-		maps.Tilt(input, vec2.West, Rounded)
-		maps.Tilt(input, vec2.South, Rounded)
-		maps.Tilt(input, vec2.East, Rounded)
+		maps.Tilt(input, maps.North, Rounded)
+		maps.Tilt(input, maps.West, Rounded)
+		maps.Tilt(input, maps.South, Rounded)
+		maps.Tilt(input, maps.East, Rounded)
 	}
 
 	// Run the spin cycle 1 billion times or until we find a loop
