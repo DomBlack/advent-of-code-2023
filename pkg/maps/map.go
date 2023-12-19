@@ -30,24 +30,53 @@ type Map[TileType Tile] struct {
 	EmptyType TileType
 
 	captureFrames bool              // Are we capturing frames?
+	TileRender    TileRender        // How to render the tiles
+	TilePalette   []color.Color     // The palette of colours to use when rendering the tiles
+	MinTileSize   int               // The minimum size of the map when rendered
+	MaxTileSize   int               // The maximum size of the map when rendered
 	Frames        []frame[TileType] // The frames of the we've captured
 }
 
 // From2DSlices creates a new map from the given 2D slice of tiles.
 // where the first index is the y position, and the second index is the x position.
-func From2DSlices[TileType Tile](tiles [][]TileType) (*Map[TileType], error) {
+func From2DSlices[TileType Tile](tiles [][]TileType, options ...MapOption) (*Map[TileType], error) {
 	if len(tiles) == 0 {
 		return nil, errors.New("cannot create map from empty slice")
+	}
+
+	cfg := newMapCfg()
+	for _, option := range options {
+		option(cfg)
 	}
 
 	height := len(tiles)
 	width := len(tiles[0])
 
 	m := &Map[TileType]{
-		Height: height,
-		Width:  width,
-		Tiles:  make([]TileType, height*width),
+		Height:      height,
+		Width:       width,
+		TileRender:  cfg.tileRender,
+		TilePalette: cfg.tilePalette,
+		MinTileSize: cfg.minTileSize,
+		MaxTileSize: cfg.maxTileSize,
+		Tiles:       make([]TileType, height*width),
 	}
+
+	// If the options didn't include a colour palette, then automatically
+	// generate one.
+	if len(cfg.tilePalette) == 0 {
+		var tile TileType
+		for {
+			if !tile.Valid() {
+				break
+			}
+
+			m.TilePalette = append(m.TilePalette, tile.Colour())
+			tile++
+		}
+	}
+	// always add black for text
+	m.TilePalette = append(m.TilePalette, color.Black)
 
 	// Copy the tiles into the map
 	for y, row := range tiles {
@@ -66,7 +95,11 @@ func From2DSlices[TileType Tile](tiles [][]TileType) (*Map[TileType], error) {
 // Tile represents a single tile in a [Map].
 type Tile interface {
 	~int | ~uint | ~int8 | ~uint8 | ~int16 | ~uint16 | ~int32 | ~uint32 | ~int64 | ~uint64
+	AnyTile
+}
 
+// AnyTile represents an untyped tile that can be used in a [Map].
+type AnyTile interface {
 	// Valid returns true if this tile is a valid tile.
 	Valid() bool
 
@@ -115,6 +148,20 @@ func (m *Map[TileType]) Set(x, y int, tile TileType) (valid bool) {
 
 	m.Tiles[y*m.Width+x] = tile
 	return true
+}
+
+// AddFlagAt adds the given flag to the tile at the given x, y position.
+func (m *Map[TileType]) AddFlagAt(x, y int, flag TileType) {
+	if x >= 0 && x < m.Width && y >= 0 && y < m.Height {
+		m.Tiles[y*m.Width+x] |= flag
+	}
+}
+
+// RemoveFlagAt removes the given flag from the tile at the given x, y position.
+func (m *Map[TileType]) RemoveFlagAt(x, y int, flag TileType) {
+	if x >= 0 && x < m.Width && y >= 0 && y < m.Height {
+		m.Tiles[y*m.Width+x] &^= flag
+	}
 }
 
 // String returns a string representation of the map.

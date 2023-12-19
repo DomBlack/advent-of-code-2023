@@ -13,12 +13,14 @@ import (
 var Day10 = runner.NewDay(10, buildPipeMaze, part1, part2).
 	WithExpectedAnswers(6890, 453)
 
-func part1(log zerolog.Logger, input Maze) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input Maze) (answer int, err error) {
 	return input.Length / 2, nil
 }
 
-func part2(log zerolog.Logger, input Maze) (answer int, err error) {
-	input.DebugOutputFile = runner.Output(10)
+func part2(ctx *runner.Context, _ zerolog.Logger, input Maze) (answer int, err error) {
+	if ctx.SaveOutput() {
+		input.DebugOutputFile = ctx.OutputFile("gif")
+	}
 
 	enclosedArea, err := input.EnclosedArea()
 	if err != nil {
@@ -170,7 +172,7 @@ func (m Maze) EnclosedArea() (int, error) {
 	}
 
 	if m.DebugOutputFile != "" {
-		if err := ff.SaveFillImage(m.DebugOutputFile + ".gif"); err != nil {
+		if err := ff.SaveFillImage(m.DebugOutputFile); err != nil {
 			return 0, errors.Wrap(err, "failed to save fill image")
 		}
 	}

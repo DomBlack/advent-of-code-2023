@@ -77,7 +77,7 @@ func numbersToSortedSlice(str string) ([]int, error) {
 	return rtn, nil
 }
 
-func part1(log zerolog.Logger, input stream.Stream[*Card]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input stream.Stream[*Card]) (answer int, err error) {
 	cardPoints := stream.Map(input, func(card *Card) (int, error) {
 		points := 0
 		playedIdx := 0
@@ -110,7 +110,7 @@ func part1(log zerolog.Logger, input stream.Stream[*Card]) (answer int, err erro
 	return stream.Sum(cardPoints)
 }
 
-func part2(log zerolog.Logger, input stream.Stream[*Card]) (answer int, err error) {
+func part2(_ *runner.Context, log zerolog.Logger, input stream.Stream[*Card]) (answer int, err error) {
 	peakable := stream.Lookahead(input)
 
 	cardPoints := stream.Map[*Card, int](peakable, func(card *Card) (int, error) {

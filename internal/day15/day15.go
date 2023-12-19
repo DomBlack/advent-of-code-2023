@@ -16,12 +16,12 @@ func parseCommas(bytes []byte) stream.Stream[string] {
 	return stream.SplitBy(bytes, ',')
 }
 
-func part1(log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
 	hashed := stream.Map(input, hash)
 	return stream.Sum(hashed)
 }
 
-func part2(log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
+func part2(_ *runner.Context, log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
 	type pair struct {
 		label string
 		value int

@@ -21,6 +21,21 @@ const (
 	West
 )
 
+func (d Direction) String() string {
+	switch d {
+	case North:
+		return "North"
+	case South:
+		return "South"
+	case East:
+		return "East"
+	case West:
+		return "West"
+	default:
+		panic(fmt.Sprintf("invalid direction: %d", d))
+	}
+}
+
 func (d Direction) FlipHorizontal() Direction {
 	switch d {
 	case North:

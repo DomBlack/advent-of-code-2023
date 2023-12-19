@@ -5,8 +5,8 @@ import (
 	"image/color"
 	"image/gif"
 	"os"
-	"time"
 
+	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
 	"github.com/cockroachdb/errors"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
@@ -24,13 +24,21 @@ type frame[TileType Tile] struct {
 
 // StartCapturingFrames starts capturing frames for the map
 // starting with the current state of the map
-func (m *Map[TileType]) StartCapturingFrames() {
+func (m *Map[TileType]) StartCapturingFrames(ctx *runner.Context) {
+	if !ctx.SaveOutput() {
+		return
+	}
+
 	m.captureFrames = true
 	m.CaptureFrame("Starting State", 100)
 }
 
 // StopCapturingFrames stops capturing frames for the map
 func (m *Map[TileType]) StopCapturingFrames(label string) {
+	if !m.captureFrames {
+		return
+	}
+
 	if label == "" {
 		label = "Finished"
 	}
@@ -56,7 +64,11 @@ func (m *Map[TileType]) CaptureFrame(label string, delay int) {
 	})
 }
 
-func (m *Map[TileType]) SaveAnimationGIF(fileName string) error {
+func (m *Map[TileType]) SaveAnimationGIF(ctx *runner.Context) error {
+	if !ctx.SaveOutput() {
+		return nil
+	}
+
 	if len(m.Frames) == 0 {
 		return errors.New("cannot save animation gif with no frames")
 	}
@@ -67,25 +79,11 @@ func (m *Map[TileType]) SaveAnimationGIF(fileName string) error {
 	}
 
 	// Create the output file
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0600)
+	f, err := os.OpenFile(ctx.OutputFile("gif"), os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0600)
 	if err != nil {
 		return errors.Wrap(err, "failed to create output file")
 	}
 	defer func() { _ = f.Close() }()
-
-	// Build our palette using the source tiles
-	palette := make([]color.Color, 0)
-	var tile TileType
-	for {
-		if !tile.Valid() {
-			break
-		}
-
-		palette = append(palette, tile.Colour())
-		tile++
-	}
-	// always add black for text
-	palette = append(palette, color.Black)
 
 	fontToUse := basicfont.Face7x13
 	fontDraw := &font.Drawer{
@@ -99,7 +97,7 @@ func (m *Map[TileType]) SaveAnimationGIF(fileName string) error {
 	maxHeight := 0
 	maxTextWidth := 0
 	maxTextHeight := 0
-	var totalTime time.Duration
+	totalTime := 0
 	for _, frame := range m.Frames {
 		if frame.width > maxWidth {
 			maxWidth = frame.width
@@ -120,7 +118,7 @@ func (m *Map[TileType]) SaveAnimationGIF(fileName string) error {
 		}
 
 		// each delay is in 100ths of a second
-		totalTime += (10 * time.Millisecond) * time.Duration(frame.delay)
+		totalTime += frame.delay
 	}
 
 	// Set the scale so our animation is at least 500px wide or tall
@@ -128,11 +126,12 @@ func (m *Map[TileType]) SaveAnimationGIF(fileName string) error {
 	if max(maxWidth, maxHeight) < 500 {
 		scale = 500 / max(maxWidth, maxHeight)
 	}
+	scale = min(max(scale, m.MinTileSize), m.MaxTileSize)
 
 	// Limit our animations to 10 seconds, if they are longer, we want to skip frames
 	frameSkip := 1
-	if totalTime > 10*time.Second {
-		frameSkip = int(totalTime / (10 * time.Second))
+	if totalTime > 100 {
+		frameSkip = int(totalTime / 100)
 	}
 
 	// Create the GIF
@@ -142,17 +141,19 @@ func (m *Map[TileType]) SaveAnimationGIF(fileName string) error {
 	imageWidth = max(imageWidth, maxTextWidth)
 	cfg := &gif.GIF{
 		Config: image.Config{
-			ColorModel: color.Palette(palette),
+			ColorModel: color.Palette(m.TilePalette),
 			Width:      imageWidth,
 			Height:     imageHeight,
 		},
 	}
 	for frameIdx, frame := range m.Frames {
-		if frameIdx%frameSkip != 0 {
+		// Skip frames if we need to to stay within our 10 second limit
+		// (except for the last frame)
+		if frameIdx%frameSkip != 0 && frameIdx != len(m.Frames)-1 {
 			continue
 		}
 
-		img := image.NewPaletted(image.Rect(0, 0, imageWidth, imageHeight), palette)
+		img := image.NewPaletted(image.Rect(0, 0, imageWidth, imageHeight), m.TilePalette)
 		for i, tile := range frame.tiles {
 			x, y := m.PositionOf(i)
 
@@ -161,12 +162,7 @@ func (m *Map[TileType]) SaveAnimationGIF(fileName string) error {
 
 			y += maxTextHeight
 
-			tileColour := tile.Colour()
-			for scaleX := 0; scaleX < scale; scaleX++ {
-				for scaleY := 0; scaleY < scale; scaleY++ {
-					img.Set(x+scaleX, y+scaleY, tileColour)
-				}
-			}
+			m.TileRender(tile, img, x, y, scale)
 		}
 
 		if frame.label != "" {

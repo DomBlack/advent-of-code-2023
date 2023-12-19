@@ -20,7 +20,7 @@ type Game struct {
 	MaxBlue  int
 }
 
-func part1(_ zerolog.Logger, games stream.Stream[Game]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, games stream.Stream[Game]) (answer int, err error) {
 	// Filter out the games which would have been impossible
 	games = stream.Filter(games, func(game Game) (bool, error) {
 		return game.MaxRed <= 12 && game.MaxGreen <= 13 && game.MaxBlue <= 14, nil
@@ -33,7 +33,7 @@ func part1(_ zerolog.Logger, games stream.Stream[Game]) (answer int, err error) 
 	return stream.Sum(gameIDs)
 }
 
-func part2(_ zerolog.Logger, games stream.Stream[Game]) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, games stream.Stream[Game]) (answer int, err error) {
 	cubePowers := stream.Map(games, func(game Game) (int, error) {
 		return game.MaxRed * game.MaxGreen * game.MaxBlue, nil
 	})

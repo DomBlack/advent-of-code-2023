@@ -44,8 +44,8 @@ var part2Tree = trie.New[int]().
 	MustInsert("eight", 8).
 	MustInsert("nine", 9)
 
-func implementation(tree *trie.Trie[int]) func(log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
-	return func(log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
+func implementation(tree *trie.Trie[int]) func(ctx *runner.Context, log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
+	return func(ctx *runner.Context, log zerolog.Logger, input stream.Stream[string]) (answer int, err error) {
 		digitsPerLine := stream.Map(input, func(line string) (int, error) {
 			matches := tree.SubstrMatches(line)
 

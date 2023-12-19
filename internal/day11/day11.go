@@ -12,13 +12,13 @@ import (
 var Day11 = runner.NewDay(11, parseUniverse, part1, part2).
 	WithExpectedAnswers(9724940, 569052586852)
 
-func part1(log zerolog.Logger, input Universe) (answer int, err error) {
+func part1(_ *runner.Context, log zerolog.Logger, input Universe) (answer int, err error) {
 	expanded := input.expand(2)
 
 	return expanded.sumOfLengths(log), nil
 }
 
-func part2(log zerolog.Logger, input Universe) (answer int, err error) {
+func part2(_ *runner.Context, log zerolog.Logger, input Universe) (answer int, err error) {
 	expanded := input.expand(1000000)
 
 	return expanded.sumOfLengths(log), nil

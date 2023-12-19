@@ -17,8 +17,8 @@ var Day07 = runner.NewStreamingDay(7, parseHands,
 ).
 	WithExpectedAnswers(250453939, 248652697)
 
-func solver(mapper func(Hand) (Hand, error)) func(log zerolog.Logger, input stream.Stream[Hand]) (answer int, err error) {
-	return func(log zerolog.Logger, input stream.Stream[Hand]) (answer int, err error) {
+func solver(mapper func(Hand) (Hand, error)) func(_ *runner.Context, log zerolog.Logger, input stream.Stream[Hand]) (answer int, err error) {
+	return func(_ *runner.Context, log zerolog.Logger, input stream.Stream[Hand]) (answer int, err error) {
 		hands, err := stream.Collect(stream.Map(input, mapper))
 		if err != nil {
 			return 0, err

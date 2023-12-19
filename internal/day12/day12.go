@@ -14,7 +14,7 @@ import (
 var Day12 = runner.NewStreamingDay(12, parseInput, part1, part2).
 	WithExpectedAnswers(7857, 28606137449920)
 
-func part1(log zerolog.Logger, input stream.Stream[Springs]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input stream.Stream[Springs]) (answer int, err error) {
 	cache := make(map[string]int)
 
 	combinations := stream.Map(input, func(spring Springs) (int, error) {
@@ -24,7 +24,7 @@ func part1(log zerolog.Logger, input stream.Stream[Springs]) (answer int, err er
 	return stream.Sum(combinations)
 }
 
-func part2(log zerolog.Logger, input stream.Stream[Springs]) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, input stream.Stream[Springs]) (answer int, err error) {
 	cache := make(map[string]int)
 
 	combinations := stream.Map(input, func(spring Springs) (int, error) {

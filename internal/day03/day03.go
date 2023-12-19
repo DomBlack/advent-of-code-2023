@@ -13,7 +13,7 @@ import (
 var Day03 = runner.NewStreamingDay(3, parseSchematic, part1, part2).
 	WithExpectedAnswers(539590, 80703636)
 
-func part1(log zerolog.Logger, input stream.Stream[Token]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input stream.Stream[Token]) (answer int, err error) {
 	parts, numbers := stream.Partition(input, func(token Token) (bool, error) {
 		if token.Type == Part {
 			return true, nil
@@ -67,7 +67,7 @@ func part1(log zerolog.Logger, input stream.Stream[Token]) (answer int, err erro
 	return stream.Sum(partNumbersAsInts)
 }
 
-func part2(log zerolog.Logger, input stream.Stream[Token]) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, input stream.Stream[Token]) (answer int, err error) {
 	parts, numbers := stream.Partition(input, func(token Token) (bool, error) {
 		if token.Type == Part {
 			return true, nil

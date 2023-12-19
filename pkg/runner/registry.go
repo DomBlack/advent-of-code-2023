@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"slices"
 )
 
@@ -13,7 +14,7 @@ type RunnableDay interface {
 	Day() int
 
 	// Run runs the day
-	Run()
+	Run(ctx context.Context, saveOutput bool)
 }
 
 // AllDays returns all the days in order

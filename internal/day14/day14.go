@@ -28,13 +28,13 @@ var (
 	})
 )
 
-func part1(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
 	maps.Tilt(input, maps.North, Rounded)
 
 	return load(input), nil
 }
 
-func part2(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
+func part2(ctx *runner.Context, log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
 	const spinCount = 1_000_000_000
 	cache := make(map[string]int)
 
@@ -47,10 +47,7 @@ func part2(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
 		input.CaptureFrame(fmt.Sprintf("Spin Cycle: %d", i), 1)
 	}
 
-	file := runner.Output(14)
-	if file != "" {
-		input.StartCapturingFrames()
-	}
+	input.StartCapturingFrames(ctx)
 
 	// Run the spin cycle 1 billion times or until we find a loop
 	var cacheKey string
@@ -83,11 +80,9 @@ func part2(log zerolog.Logger, input *maps.Map[Rocks]) (answer int, err error) {
 	answer = load(input)
 
 	// Save the animation
-	if file != "" {
-		input.StopCapturingFrames(fmt.Sprintf("Spin Cycle: %d - Answer: %d", i, answer))
-		if err := input.SaveAnimationGIF(file + ".gif"); err != nil {
-			return 0, errors.Wrap(err, "failed to save animation gif")
-		}
+	input.StopCapturingFrames(fmt.Sprintf("Spin Cycle: %d - Answer: %d", i, answer))
+	if err := input.SaveAnimationGIF(ctx); err != nil {
+		return 0, errors.Wrap(err, "failed to save animation gif")
 	}
 
 	return answer, nil

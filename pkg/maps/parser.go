@@ -9,6 +9,7 @@ import (
 
 type streamParser[TileType Tile] struct {
 	input     stream.Stream[string]
+	options   []MapOption
 	parseTile func(r rune) (TileType, error)
 
 	lines [][]TileType
@@ -18,9 +19,9 @@ type streamParser[TileType Tile] struct {
 //
 // If more than one map is found, an error will be returned. If you want to parse multiple maps
 // then use [NewStreamingParseFunc].
-func NewParseFunc[TileType Tile](parseTile func(r rune) (TileType, error)) func([]byte) (*Map[TileType], error) {
+func NewParseFunc[TileType Tile](parseTile func(r rune) (TileType, error), options ...MapOption) func([]byte) (*Map[TileType], error) {
 	return func(data []byte) (*Map[TileType], error) {
-		streamingParser := NewStreamingParseFunc(parseTile)(data)
+		streamingParser := NewStreamingParseFunc(parseTile, options...)(data)
 		maps, err := stream.Collect(streamingParser)
 		if err != nil {
 			return nil, err
@@ -38,10 +39,11 @@ func NewParseFunc[TileType Tile](parseTile func(r rune) (TileType, error)) func(
 // byte slice.
 //
 // If you only need to parse a single map use [NewParseFunc].
-func NewStreamingParseFunc[TileType Tile](parseTile func(r rune) (TileType, error)) func([]byte) stream.Stream[*Map[TileType]] {
+func NewStreamingParseFunc[TileType Tile](parseTile func(r rune) (TileType, error), options ...MapOption) func([]byte) stream.Stream[*Map[TileType]] {
 	return func(data []byte) stream.Stream[*Map[TileType]] {
 		return &streamParser[TileType]{
 			input:     stream.LinesFrom(data),
+			options:   options,
 			parseTile: parseTile,
 		}
 	}
@@ -54,7 +56,7 @@ func (s *streamParser[TileType]) Next() (*Map[TileType], error) {
 		line, err := s.input.Next()
 		if err != nil {
 			if errors.Is(err, io.EOF) && len(s.lines) > 0 {
-				m, err := From2DSlices[TileType](s.lines)
+				m, err := From2DSlices[TileType](s.lines, s.options...)
 				if err != nil {
 					return nil, err
 				}
@@ -68,7 +70,7 @@ func (s *streamParser[TileType]) Next() (*Map[TileType], error) {
 		// If the next line is empty, then loop again
 		if line == "" {
 			if len(s.lines) > 0 {
-				m, err := From2DSlices[TileType](s.lines)
+				m, err := From2DSlices[TileType](s.lines, s.options...)
 				if err != nil {
 					return nil, err
 				}

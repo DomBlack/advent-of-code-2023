@@ -12,7 +12,7 @@ import (
 
 var Day06 = runner.NewDay(6, parseBaseInput, part1, part2)
 
-func part1(log zerolog.Logger, input baseInput) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input baseInput) (answer int, err error) {
 	result := 1
 
 	times := strings.Fields(input.TimeLine)
@@ -35,7 +35,7 @@ func part1(log zerolog.Logger, input baseInput) (answer int, err error) {
 	return result, nil
 }
 
-func part2(log zerolog.Logger, input baseInput) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, input baseInput) (answer int, err error) {
 	race, err := parseRace(
 		strings.ReplaceAll(input.TimeLine, " ", ""),
 		strings.ReplaceAll(input.DistanceLine, " ", ""),

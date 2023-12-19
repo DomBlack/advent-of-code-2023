@@ -11,7 +11,7 @@ import (
 var Day05 = runner.NewDay(5, parseMaps, part1, part2).
 	WithExpectedAnswers(226172555, 47909639)
 
-func part1(log zerolog.Logger, input Maps) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input Maps) (answer int, err error) {
 	lowest := math.MaxInt
 
 	for _, seed := range input.Seeds {
@@ -31,7 +31,7 @@ func part1(log zerolog.Logger, input Maps) (answer int, err error) {
 	return lowest, nil
 }
 
-func part2(log zerolog.Logger, input Maps) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, input Maps) (answer int, err error) {
 	offsets, err := MapsToMergedOffset(
 		input.SeedToSoil,
 		input.SoilToFertilizer,

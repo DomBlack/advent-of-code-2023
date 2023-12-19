@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
@@ -25,14 +28,20 @@ import (
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day13"
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day14"
 	_ "github.com/DomBlack/advent-of-code-2023/internal/day15"
+	_ "github.com/DomBlack/advent-of-code-2023/internal/day16"
 )
 
 func main() {
 	var onlyDay int
 	var verboseLevel int
+	var saveOutput bool
 	pflag.IntVarP(&onlyDay, "day", "d", 0, "Only run this day")
 	pflag.CountVarP(&verboseLevel, "verbose", "v", "Increase verbosity")
+	pflag.BoolVarP(&saveOutput, "save-output", "s", false, "Save output to file")
 	pflag.Parse()
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer cancel()
 
 	newLevel := zerolog.Level(int(zerolog.InfoLevel) - verboseLevel)
 	if newLevel < zerolog.TraceLevel {
@@ -51,8 +60,13 @@ func main() {
 
 	start := time.Now()
 	for _, day := range days {
+		if ctx.Err() != nil {
+			log.Warn().Err(ctx.Err()).Msg("Cancelled")
+			return
+		}
+
 		if onlyDay == 0 || day.Day() == onlyDay {
-			day.Run()
+			day.Run(ctx, saveOutput)
 			runCount++
 		}
 	}

@@ -98,7 +98,7 @@ func mustBuildMaze(t *testing.T, input string) Maze {
 	testdata := filepath.Join(dir, "testdata", t.Name())
 	assert.NoError(t, os.MkdirAll(filepath.Dir(testdata), 0755), "Error creating testdata directory")
 
-	maze.DebugOutputFile = testdata
+	maze.DebugOutputFile = testdata + ".gif"
 
 	return maze
 }

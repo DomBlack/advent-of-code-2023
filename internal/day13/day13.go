@@ -13,12 +13,12 @@ import (
 var Day13 = runner.NewStreamingDay(13, parsePatterns, part1, part2).
 	WithExpectedAnswers(37975, 32497)
 
-func part1(log zerolog.Logger, input stream.Stream[Pattern]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input stream.Stream[Pattern]) (answer int, err error) {
 	answers := stream.Map(input, func(p Pattern) (int, error) { return p.SummarizeReflection(0) })
 	return stream.Sum(answers)
 }
 
-func part2(log zerolog.Logger, input stream.Stream[Pattern]) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, input stream.Stream[Pattern]) (answer int, err error) {
 	answers := stream.Map(input, func(p Pattern) (int, error) { return p.SummarizeReflection(1) })
 	return stream.Sum(answers)
 }

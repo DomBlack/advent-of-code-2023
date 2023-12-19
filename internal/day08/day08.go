@@ -12,7 +12,7 @@ import (
 
 var Day08 = runner.NewDay(8, parseMap, part1, part2)
 
-func part1(log zerolog.Logger, input Map) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input Map) (answer int, err error) {
 	// Follow the instructions
 	node := input.Root
 	steps := 0
@@ -34,7 +34,7 @@ func part1(log zerolog.Logger, input Map) (answer int, err error) {
 	return steps, nil
 }
 
-func part2(log zerolog.Logger, input Map) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, input Map) (answer int, err error) {
 	lengths := make([]int, len(input.NodesEndingWithA))
 
 	// Calculate the length of each of the parallel paths

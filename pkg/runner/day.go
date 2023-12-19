@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"os"
@@ -33,7 +34,7 @@ type answers struct {
 }
 
 // Part represents a function which given the input will return the answer for that part of the day
-type Part[Input any] func(log zerolog.Logger, input Input) (answer int, err error)
+type Part[Input any] func(ctx *Context, log zerolog.Logger, input Input) (answer int, err error)
 
 // NewStreamingDay creates a day which takes a parser to convert the input bytes into a stream of inputs,
 // which the part 1 and part 2 functions can then use.
@@ -96,7 +97,7 @@ func (d *Day[Input, Cache]) WithPart2KnownMax(max int) *Day[Input, Cache] {
 // Run executes the given parts with the given input
 //
 // If an error is encountered, the program will exit with a non-zero exit code
-func (d *Day[Input, Cache]) Run() {
+func (d *Day[Input, Cache]) Run(ctx context.Context, saveOutput bool) {
 	logger := log.With().Int("_day", d.day).Logger()
 
 	// Read the input
@@ -119,11 +120,18 @@ func (d *Day[Input, Cache]) Run() {
 	logger.Info().Str("duration", time.Since(readStart).String()).Msg("days input parsed")
 
 	runPart := func(partNum int, fn Part[Input], answers answers) {
+		partCtx := &Context{
+			Context:    ctx,
+			day:        d.day,
+			part:       partNum,
+			saveOutput: saveOutput,
+		}
+
 		if fn != nil {
-			logger := logger.With().Int("_part", 1).Logger()
+			logger := logger.With().Int("_part", partNum).Logger()
 
 			start := time.Now()
-			answer, err := fn(logger, d.cacheToInput(cacheData))
+			answer, err := fn(partCtx, logger, d.cacheToInput(cacheData))
 			dur := time.Since(start)
 			if err != nil {
 				logger.Err(err).Str("duration", dur.String()).Msg("failed to run part")
@@ -160,16 +168,6 @@ func (d *Day[Input, Cache]) Run() {
 	runPart(2, d.part2, d.part2Answers)
 }
 
-// Output returns an output path for the day
-func Output(day int) string {
-	dir := filepath.Join(repoDir, "outputs")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		log.Fatal().Err(err).Str("dir", dir).Msg("failed to create output directory")
-	}
-
-	return filepath.Join(dir, fmt.Sprintf("day%02d", day))
-}
-
 // Test runs the given parts with the given input and asserts the answers
 func (d *Day[Input, Cache]) Test(t *testing.T, part1TestInput string, part1ExpectedAnswer int, part2estInput string, part2ExpectedAnswer int) {
 	t.Helper()
@@ -198,6 +196,17 @@ func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int,
 	t.Run(testName, func(t *testing.T) {
 		t.Parallel()
 
+		baseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		ctx := &Context{
+			Context:    baseCtx,
+			day:        d.day,
+			part:       partNum,
+			isTest:     true,
+			saveOutput: true,
+		}
+
 		if fn == nil {
 			t.Skip("Part not implemented")
 		}
@@ -211,7 +220,7 @@ func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int,
 		preppedData, err := d.inputPreprocessor([]byte(strings.TrimSpace(input)))
 		assert.NoError(t, err, "Failed to preprocess input")
 
-		answer, err := fn(testLogger, d.cacheToInput(preppedData))
+		answer, err := fn(ctx, testLogger, d.cacheToInput(preppedData))
 		assert.NoError(t, err)
 		assert.Equal(t, expectedAnswer, answer, "Part answer incorrect")
 	})

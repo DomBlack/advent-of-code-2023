@@ -13,11 +13,11 @@ import (
 var Day09 = runner.NewStreamingDay(9, parseHistory, part1, part2).
 	WithExpectedAnswers(2098530125, 1016)
 
-func part1(log zerolog.Logger, input stream.Stream[History]) (answer int, err error) {
+func part1(_ *runner.Context, _ zerolog.Logger, input stream.Stream[History]) (answer int, err error) {
 	return stream.Sum(stream.Map(input, History.NextValue))
 }
 
-func part2(log zerolog.Logger, input stream.Stream[History]) (answer int, err error) {
+func part2(_ *runner.Context, _ zerolog.Logger, input stream.Stream[History]) (answer int, err error) {
 	return stream.Sum(stream.Map(input, History.PreviousValue))
 }
 
