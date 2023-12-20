@@ -89,6 +89,11 @@ func (d *Day[Input, Cache]) WithExpectedAnswers(part1, part2 int) *Day[Input, Ca
 	return d
 }
 
+func (d *Day[Input, Cache]) WithPart1KnownMax(max int) *Day[Input, Cache] {
+	d.part1Answers.max = max
+	return d
+}
+
 func (d *Day[Input, Cache]) WithPart2KnownMax(max int) *Day[Input, Cache] {
 	d.part2Answers.max = max
 	return d

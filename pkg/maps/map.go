@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"strings"
 
+	"github.com/DomBlack/advent-of-code-2023/pkg/datastructures/vectors/vec2"
 	"github.com/cockroachdb/errors"
 )
 
@@ -36,6 +37,9 @@ type Map[TileType Tile] struct {
 	MaxTileSize   int               // The maximum size of the map when rendered
 	Frames        []frame[TileType] // The frames of the we've captured
 }
+
+// Pos represents a position on the map with x, y coordinates.
+type Pos = vec2.Vec2
 
 // From2DSlices creates a new map from the given 2D slice of tiles.
 // where the first index is the y position, and the second index is the x position.
@@ -113,13 +117,25 @@ type AnyTile interface {
 }
 
 // PositionOf returns the x, y position of the given index.
-func (m *Map[TileType]) PositionOf(idx int) (x, y int) {
-	return idx % m.Width, idx / m.Width
-}
+func (m *Map[TileType]) PositionOf(idx int) Pos { return Pos{idx % m.Width, idx / m.Width} }
 
 // IndexOf returns the index of the given x, y position.
-func (m *Map[TileType]) IndexOf(x, y int) int {
-	return y*m.Width + x
+func (m *Map[TileType]) IndexOf(pos Pos) int { return pos[1]*m.Width + pos[0] }
+
+// InBounds returns true if the given position is in bounds of the map.
+func (m *Map[TileType]) InBounds(pos Pos) bool {
+	return pos[0] >= 0 && pos[0] < m.Width && pos[1] >= 0 && pos[1] < m.Height
+}
+
+// Neighbours returns the neighbours of the given position.
+func (m *Map[TileType]) Neighbours(pos Pos) (rtn []Pos) {
+	for _, offset := range vec2.CardinalOffsets {
+		if nPos := pos.Add(offset); m.InBounds(nPos) {
+			rtn = append(rtn, nPos)
+		}
+	}
+
+	return rtn
 }
 
 // Get returns the tile at the given x, y position.
@@ -129,38 +145,38 @@ func (m *Map[TileType]) IndexOf(x, y int) int {
 //
 // Otherwise valid will be true, and rtn will be the tile at
 // the given position.
-func (m *Map[TileType]) Get(x, y int) (rtn TileType, valid bool) {
-	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
-		return rtn, false
+func (m *Map[TileType]) Get(pos Pos) (rtn TileType, valid bool) {
+	if !m.InBounds(pos) {
+		return m.EmptyType, false
 	}
 
-	return m.Tiles[y*m.Width+x], true
+	return m.Tiles[pos[1]*m.Width+pos[0]], true
 }
 
 // Set sets the tile at the given x, y position.
 //
 // If the position is out of bounds, then valid will be false,
 // otherwise valid will be true.
-func (m *Map[TileType]) Set(x, y int, tile TileType) (valid bool) {
-	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
+func (m *Map[TileType]) Set(pos Pos, tile TileType) (valid bool) {
+	if !m.InBounds(pos) {
 		return false
 	}
 
-	m.Tiles[y*m.Width+x] = tile
+	m.Tiles[pos[1]*m.Width+pos[0]] = tile
 	return true
 }
 
 // AddFlagAt adds the given flag to the tile at the given x, y position.
-func (m *Map[TileType]) AddFlagAt(x, y int, flag TileType) {
-	if x >= 0 && x < m.Width && y >= 0 && y < m.Height {
-		m.Tiles[y*m.Width+x] |= flag
+func (m *Map[TileType]) AddFlagAt(pos Pos, flag TileType) {
+	if m.InBounds(pos) {
+		m.Tiles[pos[1]*m.Width+pos[0]] |= flag
 	}
 }
 
 // RemoveFlagAt removes the given flag from the tile at the given x, y position.
-func (m *Map[TileType]) RemoveFlagAt(x, y int, flag TileType) {
-	if x >= 0 && x < m.Width && y >= 0 && y < m.Height {
-		m.Tiles[y*m.Width+x] &^= flag
+func (m *Map[TileType]) RemoveFlagAt(pos Pos, flag TileType) {
+	if m.InBounds(pos) {
+		m.Tiles[pos[1]*m.Width+pos[0]] &^= flag
 	}
 }
 

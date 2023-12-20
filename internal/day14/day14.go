@@ -91,8 +91,8 @@ func part2(ctx *runner.Context, log zerolog.Logger, input *maps.Map[Rocks]) (ans
 func load(m *maps.Map[Rocks]) (sum int) {
 	for idx, tile := range m.Tiles {
 		if tile == Rounded {
-			_, y := m.PositionOf(idx)
-			sum += m.Height - y
+			pos := m.PositionOf(idx)
+			sum += m.Height - pos[1]
 		}
 	}
 

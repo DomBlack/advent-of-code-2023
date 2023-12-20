@@ -42,7 +42,7 @@ func (m *Map[TileType]) StopCapturingFrames(label string) {
 	if label == "" {
 		label = "Finished"
 	}
-	m.CaptureFrame(label, 100)
+	m.CaptureFrame(label, 300)
 
 	m.captureFrames = false
 }
@@ -155,14 +155,14 @@ func (m *Map[TileType]) SaveAnimationGIF(ctx *runner.Context) error {
 
 		img := image.NewPaletted(image.Rect(0, 0, imageWidth, imageHeight), m.TilePalette)
 		for i, tile := range frame.tiles {
-			x, y := m.PositionOf(i)
+			pos := m.PositionOf(i)
 
-			x *= scale
-			y *= scale
+			pos[0] *= scale
+			pos[1] *= scale
 
-			y += maxTextHeight
+			pos[1] += maxTextHeight
 
-			m.TileRender(tile, img, x, y, scale)
+			m.TileRender(tile, img, pos[0], pos[1], scale)
 		}
 
 		if frame.label != "" {

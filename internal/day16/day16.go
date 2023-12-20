@@ -26,8 +26,7 @@ var (
 )
 
 type laserHead struct {
-	x   int
-	y   int
+	pos maps.Pos
 	dir Tile
 }
 
@@ -141,8 +140,9 @@ func runLasers(input *maps.Map[Tile], startX int, startY int, initDirection Tile
 	// Set up the initial state
 	laserHeads := make([]laserHead, 0)
 	nextLaserHeads := make([]laserHead, 0)
-	laserHeads = append(laserHeads, laserHead{startX, startY, initDirection})
-	input.AddFlagAt(startX, startY, LaserHead|initDirection)
+	startPos := maps.Pos{startX, startY}
+	laserHeads = append(laserHeads, laserHead{startPos, initDirection})
+	input.AddFlagAt(startPos, LaserHead|initDirection)
 
 	step := 1
 
@@ -152,11 +152,11 @@ func runLasers(input *maps.Map[Tile], startX int, startY int, initDirection Tile
 		nextLaserHeads = nextLaserHeads[:0]
 
 		for _, head := range laserHeads {
-			tile, valid := input.Get(head.x, head.y)
+			tile, valid := input.Get(head.pos)
 			if !valid {
 				continue
 			}
-			input.RemoveFlagAt(head.x, head.y, LaserHead)
+			input.RemoveFlagAt(head.pos, LaserHead)
 
 			// Calculate the new directions
 			switch head.dir {
@@ -221,8 +221,8 @@ func runLasers(input *maps.Map[Tile], startX int, startY int, initDirection Tile
 
 			// If the tile is empty, then we need to draw the laser beam
 			for _, dir := range newDirs {
-				newX := head.x
-				newY := head.y
+				newX := head.pos[0]
+				newY := head.pos[1]
 
 				switch dir {
 				case LaserUp:
@@ -238,13 +238,14 @@ func runLasers(input *maps.Map[Tile], startX int, startY int, initDirection Tile
 				}
 
 				// If the new pos isn't valid or is already a laser beam in the same direction, then skip it
-				newTile, valid := input.Get(newX, newY)
+				newPos := maps.Pos{newX, newY}
+				newTile, valid := input.Get(newPos)
 				if !valid || newTile&dir != 0 {
 					continue
 				}
 
-				input.AddFlagAt(newX, newY, LaserHead|dir)
-				nextLaserHeads = append(nextLaserHeads, laserHead{newX, newY, dir})
+				input.AddFlagAt(newPos, LaserHead|dir)
+				nextLaserHeads = append(nextLaserHeads, laserHead{newPos, dir})
 			}
 			newDirs = newDirs[:0]
 		}
