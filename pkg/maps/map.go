@@ -41,20 +41,12 @@ type Map[TileType Tile] struct {
 // Pos represents a position on the map with x, y coordinates.
 type Pos = vec2.Vec2
 
-// From2DSlices creates a new map from the given 2D slice of tiles.
-// where the first index is the y position, and the second index is the x position.
-func From2DSlices[TileType Tile](tiles [][]TileType, options ...MapOption) (*Map[TileType], error) {
-	if len(tiles) == 0 {
-		return nil, errors.New("cannot create map from empty slice")
-	}
-
+// New creates a new map with the given width and height will all tiles set to the zero value of [Tile].
+func New[TileType Tile](width, height int, options ...MapOption) *Map[TileType] {
 	cfg := newMapCfg()
 	for _, option := range options {
 		option(cfg)
 	}
-
-	height := len(tiles)
-	width := len(tiles[0])
 
 	m := &Map[TileType]{
 		Height:      height,
@@ -81,6 +73,21 @@ func From2DSlices[TileType Tile](tiles [][]TileType, options ...MapOption) (*Map
 	}
 	// always add black for text
 	m.TilePalette = append(m.TilePalette, color.Black)
+
+	return m
+}
+
+// From2DSlices creates a new map from the given 2D slice of tiles.
+// where the first index is the y position, and the second index is the x position.
+func From2DSlices[TileType Tile](tiles [][]TileType, options ...MapOption) (*Map[TileType], error) {
+	if len(tiles) == 0 {
+		return nil, errors.New("cannot create map from empty slice")
+	}
+
+	height := len(tiles)
+	width := len(tiles[0])
+
+	m := New[TileType](width, height, options...)
 
 	// Copy the tiles into the map
 	for y, row := range tiles {

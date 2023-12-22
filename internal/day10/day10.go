@@ -163,7 +163,7 @@ func (m Maze) EnclosedArea() (int, error) {
 		ff.StartCapturingFills()
 	}
 
-	// Fill from all the edges
+	// FillTile from all the edges
 	for coord := 0; coord < m.Size*mapScalar; coord++ {
 		ff.Fill(coord, 0)
 		ff.Fill(0, coord)

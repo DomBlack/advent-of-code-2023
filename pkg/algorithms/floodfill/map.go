@@ -13,7 +13,7 @@ import (
 var palette = []color.Color{
 	color.RGBA{R: 255, G: 255, B: 255, A: 255}, // 0 (EmptyType): White
 	color.RGBA{R: 0, G: 0, B: 0, A: 255},       // 1 (Wall): Black
-	color.RGBA{R: 0, G: 255, B: 0, A: 255},     // 2 (Fill): Green
+	color.RGBA{R: 0, G: 255, B: 0, A: 255},     // 2 (FillTile): Green
 }
 
 // Map represents a map of tiles with a given height and width
@@ -37,10 +37,12 @@ type Tile int
 const (
 	Empty Tile = iota
 	Wall
-	Fill
+	FillTile
 )
 
 // NewMap creates a new map with the given height and width
+//
+// Deprecated: Use Fill instead
 func NewMap(height, width int) *Map {
 	m := &Map{
 		Height:          height,
@@ -59,7 +61,9 @@ func NewMap(height, width int) *Map {
 
 // Fill fills the map from the given x, y position (assuming it's Empty)
 //
-// If it is not already empty, nothing will be done
+// # If it is not already empty, nothing will be done
+//
+// Deprecated: Use Fill instead
 func (m *Map) Fill(x, y int) {
 	if !m.isEmpty(x, y) {
 		return
@@ -74,7 +78,7 @@ func (m *Map) Fill(x, y int) {
 
 	count := 0
 	set := func(x, y int) {
-		m.Map[y][x] = Fill
+		m.Map[y][x] = FillTile
 		count++
 
 		if len(m.fillImages) > 0 && count%m.ImageSkipFrames == 0 {

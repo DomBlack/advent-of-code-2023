@@ -29,6 +29,10 @@ func (v Vec2) Sub(v2 Vec2) Vec2 {
 	return Vec2{v[0] - v2[0], v[1] - v2[1]}
 }
 
+func (v Vec2) Scale(s int) Vec2 {
+	return Vec2{v[0] * s, v[1] * s}
+}
+
 // Neg returns the negative of the vector
 func (v Vec2) Neg() Vec2 {
 	return Vec2{-v[0], -v[1]}
