@@ -195,6 +195,21 @@ func (d *Day[Input, Cache]) TestPart2(t *testing.T, input string, expectedAnswer
 	d.testPart(t, fmt.Sprintf("part2_%s", input), 2, d.part2, input, expectedAnswer)
 }
 
+// TestContext creates a context for testing with
+func (d *Day[Input, Cache]) TestContext(t *testing.T, partNum int) *Context {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	return &Context{
+		Context:    ctx,
+		day:        d.day,
+		part:       partNum,
+		test:       t,
+		isTest:     true,
+		saveOutput: true,
+	}
+}
+
 // testPart runs the given part with the given input and asserts the answer
 func (d *Day[Input, Cache]) testPart(t *testing.T, testName string, partNum int, fn Part[Input], input string, expectedAnswer int) {
 	t.Helper()

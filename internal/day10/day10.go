@@ -2,9 +2,11 @@ package day10
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
 	"github.com/DomBlack/advent-of-code-2023/pkg/algorithms/floodfill"
+	"github.com/DomBlack/advent-of-code-2023/pkg/maps"
 	"github.com/DomBlack/advent-of-code-2023/pkg/runner"
 	"github.com/cockroachdb/errors"
 	"github.com/rs/zerolog"
@@ -18,11 +20,7 @@ func part1(_ *runner.Context, _ zerolog.Logger, input Maze) (answer int, err err
 }
 
 func part2(ctx *runner.Context, _ zerolog.Logger, input Maze) (answer int, err error) {
-	if ctx.SaveOutput() {
-		input.DebugOutputFile = ctx.OutputFile("gif")
-	}
-
-	enclosedArea, err := input.EnclosedArea()
+	enclosedArea, err := input.EnclosedArea(ctx)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to calculate enclosed area")
 	}
@@ -34,8 +32,6 @@ type Maze struct {
 	Start  *Tile
 	Size   int
 	Length int
-
-	DebugOutputFile string
 }
 
 func (m Maze) String() string {
@@ -82,20 +78,74 @@ func (m Maze) String() string {
 	return sb.String()
 }
 
-func (m Maze) EnclosedArea() (int, error) {
+func (m Maze) EnclosedArea(ctx *runner.Context) (int, error) {
 	// Temporarily store our tiles in a 2D array
 	tiles := make([][]*Tile, m.Size)
 	for i := range tiles {
 		tiles[i] = make([]*Tile, m.Size)
 	}
 
+	// We're going to construct a 3 by 3 grid of tiles around the start
+	//
+	// This is so we can fill through the
+	const mapScalar = 3
+
+	nm := maps.New[MapTile](m.Size*mapScalar, m.Size*mapScalar)
+	nm.StartCapturingFrames(ctx)
+
 	// Walk our maze and populate the 2D array
 	prev := m.Start
 	tiles[m.Start.X][m.Start.Y] = m.Start
 	node := m.Start.Next(nil)
 	length := 1
+
+	drawNode := func(node *Tile) {
+		row1 := nm.Tiles[nm.IndexOf(maps.Pos{node.X * mapScalar, node.Y * mapScalar}):]
+		row2 := nm.Tiles[nm.IndexOf(maps.Pos{node.X * mapScalar, node.Y*mapScalar + 1}):]
+		row3 := nm.Tiles[nm.IndexOf(maps.Pos{node.X * mapScalar, node.Y*mapScalar + 2}):]
+
+		switch {
+		case node.North != nil && node.South != nil:
+			pipe := []MapTile{Empty, Wall, Empty}
+			copy(row1, pipe)
+			copy(row2, pipe)
+			copy(row3, pipe)
+
+		case node.East != nil && node.West != nil:
+			empty := []MapTile{Empty, Empty, Empty}
+			copy(row1, empty)
+			copy(row2, []MapTile{Wall, Wall, Wall})
+			copy(row3, empty)
+
+		case node.North != nil && node.East != nil:
+			copy(row1, []MapTile{Empty, Wall, Empty})
+			copy(row2, []MapTile{Empty, Wall, Wall})
+			copy(row3, []MapTile{Empty, Empty, Empty})
+
+		case node.North != nil && node.West != nil:
+			copy(row1, []MapTile{Empty, Wall, Empty})
+			copy(row2, []MapTile{Wall, Wall, Empty})
+			copy(row3, []MapTile{Empty, Empty, Empty})
+
+		case node.South != nil && node.West != nil:
+			copy(row1, []MapTile{Empty, Empty, Empty})
+			copy(row2, []MapTile{Wall, Wall, Empty})
+			copy(row3, []MapTile{Empty, Wall, Empty})
+
+		case node.South != nil && node.East != nil:
+			copy(row1, []MapTile{Empty, Empty, Empty})
+			copy(row2, []MapTile{Empty, Wall, Wall})
+			copy(row3, []MapTile{Empty, Wall, Empty})
+		}
+
+		nm.CaptureFrame("Building Maze", 1)
+	}
+
+	drawNode(m.Start)
+
 	for node != m.Start {
 		tiles[node.X][node.Y] = node
+		drawNode(node)
 
 		// These two are done when we make the maze, just here to double check
 		if node == nil {
@@ -109,72 +159,14 @@ func (m Maze) EnclosedArea() (int, error) {
 		length++
 	}
 
-	// We're going to construct a 3 by 3 grid of tiles around the start
-	//
-	// This is so we can fill through the
-	const mapScalar = 3
-
-	ff := floodfill.NewMap(m.Size*mapScalar, m.Size*mapScalar)
-	for y := 0; y < m.Size; y++ {
-		for x := 0; x < m.Size; x++ {
-			if tiles[x][y] != nil {
-				tile := tiles[x][y]
-
-				switch {
-				case tile.North != nil && tile.South != nil:
-					pipe := []floodfill.Tile{floodfill.Empty, floodfill.Wall, floodfill.Empty}
-					copy(ff.Map[y*mapScalar][x*mapScalar:], pipe)
-					copy(ff.Map[y*mapScalar+1][x*mapScalar:], pipe)
-					copy(ff.Map[y*mapScalar+2][x*mapScalar:], pipe)
-
-				case tile.East != nil && tile.West != nil:
-					empty := []floodfill.Tile{floodfill.Empty, floodfill.Empty, floodfill.Empty}
-					copy(ff.Map[y*mapScalar][x*mapScalar:], empty)
-					copy(ff.Map[y*mapScalar+1][x*mapScalar:], []floodfill.Tile{floodfill.Wall, floodfill.Wall, floodfill.Wall})
-					copy(ff.Map[y*mapScalar+2][x*mapScalar:], empty)
-
-				case tile.North != nil && tile.East != nil:
-					copy(ff.Map[y*mapScalar][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Wall, floodfill.Empty})
-					copy(ff.Map[y*mapScalar+1][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Wall, floodfill.Wall})
-					copy(ff.Map[y*mapScalar+2][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Empty, floodfill.Empty})
-
-				case tile.North != nil && tile.West != nil:
-					copy(ff.Map[y*mapScalar][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Wall, floodfill.Empty})
-					copy(ff.Map[y*mapScalar+1][x*mapScalar:], []floodfill.Tile{floodfill.Wall, floodfill.Wall, floodfill.Empty})
-					copy(ff.Map[y*mapScalar+2][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Empty, floodfill.Empty})
-
-				case tile.South != nil && tile.West != nil:
-					copy(ff.Map[y*mapScalar][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Empty, floodfill.Empty})
-					copy(ff.Map[y*mapScalar+1][x*mapScalar:], []floodfill.Tile{floodfill.Wall, floodfill.Wall, floodfill.Empty})
-					copy(ff.Map[y*mapScalar+2][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Wall, floodfill.Empty})
-
-				case tile.South != nil && tile.East != nil:
-					copy(ff.Map[y*mapScalar][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Empty, floodfill.Empty})
-					copy(ff.Map[y*mapScalar+1][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Wall, floodfill.Wall})
-					copy(ff.Map[y*mapScalar+2][x*mapScalar:], []floodfill.Tile{floodfill.Empty, floodfill.Wall, floodfill.Empty})
-				}
-			}
-		}
-	}
-
-	if m.DebugOutputFile != "" {
-		ff.ImageScale = 1
-		ff.ImageSkipFrames = 9 * 3 * 10 * 2
-		ff.StartCapturingFills()
-	}
+	nm.CaptureFrame("Maze Built", 100)
 
 	// FillTile from all the edges
 	for coord := 0; coord < m.Size*mapScalar; coord++ {
-		ff.Fill(coord, 0)
-		ff.Fill(0, coord)
-		ff.Fill(coord, (m.Size*mapScalar)-1)
-		ff.Fill((m.Size*mapScalar)-1, coord)
-	}
-
-	if m.DebugOutputFile != "" {
-		if err := ff.SaveFillImage(m.DebugOutputFile); err != nil {
-			return 0, errors.Wrap(err, "failed to save fill image")
-		}
+		floodfill.Fill(nm, maps.Pos{coord, 0}, Filled)
+		floodfill.Fill(nm, maps.Pos{0, coord}, Filled)
+		floodfill.Fill(nm, maps.Pos{coord, (m.Size * mapScalar) - 1}, Filled)
+		floodfill.Fill(nm, maps.Pos{(m.Size * mapScalar) - 1, coord}, Filled)
 	}
 
 	// Now count the number of tiles which are still marked as empty (i.e. can't be reached from the outside edge of the maze)
@@ -183,11 +175,17 @@ func (m Maze) EnclosedArea() (int, error) {
 		for x := 0; x < m.Size; x++ {
 			// nil tiles means this tile wasn't originally a wall of some kind
 			if tiles[x][y] == nil {
-				if ff.Map[y*mapScalar][x*mapScalar] == floodfill.Empty {
+				value, valid := nm.Get(maps.Pos{x * mapScalar, y * mapScalar})
+				if value == Empty && valid {
 					enclosuedTileCount++
 				}
 			}
 		}
+	}
+
+	nm.StopCapturingFrames(fmt.Sprintf("Enclosed Area: %d", enclosuedTileCount))
+	if err := nm.SaveAnimationGIF(ctx); err != nil {
+		return 0, errors.Wrap(err, "failed to save animation")
 	}
 
 	return enclosuedTileCount, nil
@@ -357,4 +355,42 @@ func buildPipeMaze(input []byte) (Maze, error) {
 		Size:   size,
 		Length: length,
 	}, nil
+}
+
+type MapTile uint8
+
+const (
+	Empty MapTile = iota
+	Wall
+	Filled
+)
+
+func (m MapTile) Valid() bool {
+	return m <= Filled
+}
+
+func (m MapTile) Rune() rune {
+	switch m {
+	case Empty:
+		return '.'
+	case Wall:
+		return '#'
+	case Filled:
+		return '*'
+	default:
+		panic("invalid map tile")
+	}
+}
+
+func (m MapTile) Colour() color.Color {
+	switch m {
+	case Empty:
+		return color.White
+	case Wall:
+		return color.Black
+	case Filled:
+		return color.RGBA{G: 255, A: 255}
+	default:
+		panic("invalid map tile")
+	}
 }

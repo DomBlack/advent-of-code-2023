@@ -1,9 +1,6 @@
 package day10
 
 import (
-	"os"
-	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,8 +39,10 @@ func Test_Day10_Part2(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			ctx := Day10.TestContext(t, 2)
+
 			maze := mustBuildMaze(t, input)
-			actual, err := maze.EnclosedArea()
+			actual, err := maze.EnclosedArea(ctx)
 			assert.NoError(t, err, "Error calculating total enclosed area")
 			assert.Equal(t, expected, actual, "Total enclosed area")
 		})
@@ -91,14 +90,5 @@ L--J.L7...LJS7F-7L7.
 func mustBuildMaze(t *testing.T, input string) Maze {
 	maze, err := buildPipeMaze([]byte(input))
 	assert.NoError(t, err, "Error building maze")
-
-	_, filename, _, _ := runtime.Caller(1)
-	dir := filepath.Dir(filename)
-
-	testdata := filepath.Join(dir, "testdata", t.Name())
-	assert.NoError(t, os.MkdirAll(filepath.Dir(testdata), 0755), "Error creating testdata directory")
-
-	maze.DebugOutputFile = testdata + ".gif"
-
 	return maze
 }
